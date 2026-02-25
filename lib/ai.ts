@@ -52,7 +52,18 @@ Generate outputs in language: ${language}, Tone: ${tone}. Do NOT invent facts! O
     });
 
     if (!response.ok) {
-        throw new Error('Failed to communicate with OpenRouter');
+        let errStr = "Failed to communicate with OpenRouter";
+        try {
+            const errData = await response.json();
+            if (errData?.error?.message) {
+                errStr = `OpenRouter API Error (${response.status}): ${errData.error.message}`;
+            } else if (errData?.message) {
+                errStr = `OpenRouter Error (${response.status}): ${errData.message}`;
+            } else {
+                errStr = `OpenRouter Error Code: ${response.status}`;
+            }
+        } catch (e) { /* ignore parse error if none */ }
+        throw new Error(errStr);
     }
 
     const data = (await response.json()) as OpenRouterResponse;

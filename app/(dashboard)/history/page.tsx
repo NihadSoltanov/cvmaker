@@ -3,6 +3,7 @@
 import { FileText, ArrowRight, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { GuideButton } from "@/components/GuideButton";
 
 export default function HistoryPage() {
     const [history, setHistory] = useState<any[]>([]);
@@ -39,14 +40,28 @@ export default function HistoryPage() {
 
     return (
         <div className="space-y-8 relative z-10 w-full mb-20">
-            <div className="flex items-center gap-4 mb-8">
-                <div className="w-14 h-14 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center shadow-inner">
-                    <Clock className="w-7 h-7" />
+            <div className="flex items-start justify-between gap-4 mb-8 flex-wrap">
+                <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center shadow-inner">
+                        <Clock className="w-7 h-7" />
+                    </div>
+                    <div>
+                        <h1 className="text-4xl font-black tracking-tight text-neutral-900 dark:text-white">Application History</h1>
+                        <p className="text-neutral-500 dark:text-neutral-400 font-medium">Access and review your past AI optimization packages.</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 className="text-4xl font-black tracking-tight text-neutral-900 dark:text-white">Application History</h1>
-                    <p className="text-neutral-500 dark:text-neutral-400 font-medium">Access and redownload your past AI optimization packages.</p>
-                </div>
+                <GuideButton guide={{
+                    title: "Application History Guide",
+                    steps: [
+                        "Every time you click 'Optimize Now' in the Optimize page, the result is saved here automatically.",
+                        "Click 'View Result' on any past optimization to review its Cover Letter, messages, etc.",
+                        "Results are sorted newest-first."
+                    ],
+                    tips: [
+                        "Each optimization is linked to the Job Description you pasted and your resume at the time.",
+                        "Results are kept indefinitely on paid plans."
+                    ]
+                }} />
             </div>
 
             <div className="space-y-4">

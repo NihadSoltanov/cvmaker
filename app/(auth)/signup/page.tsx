@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { createProfile } from "@/app/actions/auth";
 
 export default function SignupPage() {
     const router = useRouter();
@@ -30,6 +31,10 @@ export default function SignupPage() {
             setErrorMsg(error.message);
             setIsLoading(false);
             return;
+        }
+
+        if (data.user) {
+            await createProfile(data.user.id, email, fullName);
         }
 
         router.push("/dashboard");

@@ -4,6 +4,7 @@ import { Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { GuideButton } from "@/components/GuideButton";
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -60,14 +61,30 @@ export default function SettingsPage() {
     };
     return (
         <div className="space-y-8 relative z-10 w-full mb-20">
-            <div className="flex items-center gap-4 mb-8">
-                <div className="w-14 h-14 bg-neutral-900 dark:bg-neutral-800 text-white dark:text-neutral-200 rounded-2xl flex items-center justify-center shadow-inner">
-                    <Settings className="w-7 h-7" />
+            <div className="flex items-start justify-between gap-4 mb-8 flex-wrap">
+                <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-neutral-900 dark:bg-neutral-800 text-white dark:text-neutral-200 rounded-2xl flex items-center justify-center shadow-inner">
+                        <Settings className="w-7 h-7" />
+                    </div>
+                    <div>
+                        <h1 className="text-4xl font-black tracking-tight text-neutral-900 dark:text-white">Settings</h1>
+                        <p className="text-neutral-500 dark:text-neutral-400 font-medium">Manage your profile, language preferences, and subscription.</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 className="text-4xl font-black tracking-tight text-neutral-900 dark:text-white">Settings</h1>
-                    <p className="text-neutral-500 dark:text-neutral-400 font-medium">Manage your profile, language preferences, and subscription.</p>
-                </div>
+                <GuideButton guide={{
+                    title: "Settings Page Guide",
+                    steps: [
+                        "Update your Full Name here — this will appear in the sidebar greeting.",
+                        "Email cannot be changed here for security reasons. Contact support if needed.",
+                        "Your current subscription plan and its status are shown in the Subscription section.",
+                        "Click 'Upgrade to Pro' to unlock unlimited optimizations, all 6 CV templates, and unlimited PDF downloads.",
+                        "Use the Danger Zone to permanently delete all your data if you choose to."
+                    ],
+                    tips: [
+                        "Pro plan grants: unlimited AI optimizations, all templates, unlimited PDF exports.",
+                        "Data deletion is irreversible — please export anything you need first."
+                    ]
+                }} />
             </div>
 
             <div className="grid lg:grid-cols-2 gap-8">

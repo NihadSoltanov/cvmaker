@@ -5,6 +5,7 @@ import { JobPasteBox } from "@/components/JobPasteBox";
 import { ResultsTabs } from "@/components/ResultsTabs";
 import { Zap } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { GuideButton } from "@/components/GuideButton";
 
 export default function OptimizePage() {
     const [jdText, setJdText] = useState("");
@@ -70,9 +71,9 @@ export default function OptimizePage() {
             }
 
             setResults(data);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Optimize error:", error);
-            alert("Error during optimization. Please try again.");
+            alert("Error during optimization: " + (error.message || "Please try again."));
         } finally {
             setIsGenerating(false);
         }
@@ -80,14 +81,31 @@ export default function OptimizePage() {
 
     return (
         <div className="space-y-8 relative z-10 pb-20">
-            <div className="flex items-center gap-4 mb-8">
-                <div className="w-14 h-14 bg-purple-500/10 text-purple-500 rounded-2xl flex items-center justify-center shadow-inner">
-                    <Zap className="w-7 h-7" />
+            <div className="flex items-start justify-between gap-4 mb-8 flex-wrap">
+                <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-purple-500/10 text-purple-500 rounded-2xl flex items-center justify-center shadow-inner">
+                        <Zap className="w-7 h-7" />
+                    </div>
+                    <div>
+                        <h1 className="text-4xl font-black tracking-tight text-neutral-900 dark:text-white">Tailor Application</h1>
+                        <p className="text-neutral-500 dark:text-neutral-400 font-medium">We'll use your Master CV and the Job Description to create a perfect match.</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 className="text-4xl font-black tracking-tight text-neutral-900 dark:text-white">Tailor Application</h1>
-                    <p className="text-neutral-500 dark:text-neutral-400 font-medium">We'll use your Master CV and the Job Description to create a perfect match.</p>
-                </div>
+                <GuideButton guide={{
+                    title: "How to Optimize Your Application",
+                    steps: [
+                        "First, make sure you've saved your Master CV in the 'My CV' page. The AI uses this as the base.",
+                        "Find a job posting you want to apply to and copy everything: job title, company, requirements, responsibilities.",
+                        "Paste the full job description in the left text box.",
+                        "Click 'Optimize Now' and wait — the AI generates a tailored Cover Letter, LinkedIn messages, and more.",
+                        "Review the results in the tabs on the right: Cover Letter, LinkedIn Messages, Application Text, Missing Requirements.",
+                    ],
+                    tips: [
+                        "The more detailed your Master CV, the better the AI output.",
+                        "Always copy the full JD including qualification requirements, not just the summary.",
+                        "Results are saved to your History page automatically."
+                    ]
+                }} />
             </div>
 
             <div className="grid lg:grid-cols-2 gap-8">

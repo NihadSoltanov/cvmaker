@@ -24,8 +24,8 @@ export async function POST(req: Request) {
         // await supabase.from('tailored_outputs').insert(...)
 
         return NextResponse.json(result);
-    } catch (error) {
+    } catch (error: any) {
         console.error("AI Generation error:", error);
-        return NextResponse.json({ error: 'Generation failed' }, { status: 500 });
+        return NextResponse.json({ error: error.message || 'Generation failed' }, { status: 500 });
     }
 }
