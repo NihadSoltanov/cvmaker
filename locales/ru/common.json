@@ -1,0 +1,18 @@
+{
+    "common": {
+        "cta_start_free": "Начать бесплатно",
+        "cta_upgrade_pro": "Перейти на Pro (30$/год)",
+        "nav_dashboard": "Панель",
+        "nav_pricing": "Цены",
+        "upload_cv": "Загрузить резюме",
+        "paste_jd": "Вставить текст вакансии",
+        "optimize": "Оптимизировать",
+        "download_pdf": "Скачать PDF",
+        "create_share_link": "Создать ссылку для отправки",
+        "copy_linkedin_message": "Скопировать сообщение для LinkedIn",
+        "history": "История",
+        "settings": "Настройки",
+        "limit_reached": "Достигнут лимит.",
+        "upgrade_to_continue": "Перейдите на Pro, чтобы продолжить."
+    }
+}

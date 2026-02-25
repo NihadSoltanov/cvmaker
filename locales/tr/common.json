@@ -1,0 +1,18 @@
+{
+    "common": {
+        "cta_start_free": "Ücretsiz başla",
+        "cta_upgrade_pro": "Pro'ya yükselt (30$/yıl)",
+        "nav_dashboard": "Panel",
+        "nav_pricing": "Fiyatlandırma",
+        "upload_cv": "CV yükle",
+        "paste_jd": "İş ilanını yapıştır",
+        "optimize": "Optimize et",
+        "download_pdf": "PDF indir",
+        "create_share_link": "Paylaşım linki oluştur",
+        "copy_linkedin_message": "LinkedIn mesajını kopyala",
+        "history": "Geçmiş",
+        "settings": "Ayarlar",
+        "limit_reached": "Kullanım limitine ulaştın.",
+        "upgrade_to_continue": "Devam etmek için yükselt."
+    }
+}

@@ -1,0 +1,18 @@
+{
+    "common": {
+        "cta_start_free": "Pulsuz başla",
+        "cta_upgrade_pro": "Pro-ya keç (30$/il)",
+        "nav_dashboard": "Panel",
+        "nav_pricing": "Qiymətlər",
+        "upload_cv": "CV yüklə",
+        "paste_jd": "İş elanını yapışdır",
+        "optimize": "Optimallaşdır",
+        "download_pdf": "PDF yüklə",
+        "create_share_link": "Paylaşım linki yarat",
+        "copy_linkedin_message": "LinkedIn mesajını kopyala",
+        "history": "Tarixçə",
+        "settings": "Parametrlər",
+        "limit_reached": "Limitə çatdın.",
+        "upgrade_to_continue": "Davam etmək üçün Pro-ya keç."
+    }
+}

@@ -1,0 +1,17 @@
+﻿Usage: 21st-dev-cli [options] [command]
+
+Install MCP configuration for various AI clients
+
+Options:
+  -V, --version                        output the version number
+  -h, --help                           display help for command
+
+Commands:
+  install [options] <client>           Install MCP configuration for a specific
+                                       client
+  add [options] <componentIdentifier>  Add a new UI component using shadcn/ui
+                                       and update the registry.
+  remove [options] <componentName>     Remove a component and its unused
+                                       dependencies (components and npm
+                                       packages)
+  help [command]                       display help for command

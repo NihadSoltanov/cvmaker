@@ -1,0 +1,18 @@
+{
+  "common": {
+    "cta_start_free": "Start free",
+    "cta_upgrade_pro": "Upgrade to Pro ($30/year)",
+    "nav_dashboard": "Dashboard",
+    "nav_pricing": "Pricing",
+    "upload_cv": "Upload CV",
+    "paste_jd": "Paste job description",
+    "optimize": "Optimize",
+    "download_pdf": "Download PDF",
+    "create_share_link": "Create share link",
+    "copy_linkedin_message": "Copy LinkedIn message",
+    "history": "History",
+    "settings": "Settings",
+    "limit_reached": "Usage limit reached.",
+    "upgrade_to_continue": "Upgrade to continue."
+  }
+}
