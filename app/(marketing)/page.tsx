@@ -33,8 +33,10 @@ export default function MarketingPage() {
 
             <header className="flex items-center justify-between px-6 py-4 z-50 sticky top-0 bg-white/5 dark:bg-black/5 backdrop-blur-xl border-b border-black/5 dark:border-white/5">
                 <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-xl leading-none">
-                        A
+                    <div className="w-8 h-8 rounded-full bg-black dark:bg-white flex items-center justify-center border border-neutral-200 dark:border-neutral-800 shadow-sm flex-shrink-0">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white dark:text-black">
+                            <path d="M12 4L20 18H4L12 4Z" fill="currentColor" />
+                        </svg>
                     </div>
                     <span className="font-extrabold text-lg hidden sm:block tracking-tight text-neutral-900 dark:text-neutral-100">AI CV Optimizer</span>
                 </motion.div>

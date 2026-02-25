@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Globe } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -15,13 +15,20 @@ export function LanguageSwitcher() {
     const [isOpen, setIsOpen] = useState(false);
     const [current, setCurrent] = useState('en');
 
-    // Typically, you would handle cookie/localStorage and routing updates here.
-    // For UI sake, we just mock the change visually.
+    useEffect(() => {
+        if (typeof document !== 'undefined') {
+            const match = document.cookie.match(new RegExp('(^| )NEXT_LOCALE=([^;]+)'));
+            if (match) setCurrent(match[2]);
+        }
+    }, []);
 
     const handleSelect = (code: string) => {
         setCurrent(code);
         setIsOpen(false);
-        // TODO: implement actual language context change + persistance
+        if (typeof document !== 'undefined') {
+            document.cookie = `NEXT_LOCALE=${code}; path=/; max-age=31536000`;
+            window.location.reload();
+        }
     };
 
     return (
@@ -50,8 +57,8 @@ export function LanguageSwitcher() {
                                     key={lang.code}
                                     onClick={() => handleSelect(lang.code)}
                                     className={`block px-4 py-2 text-sm w-full text-left transition-colors ${current === lang.code
-                                            ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold'
-                                            : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                                        ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold'
+                                        : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
                                         }`}
                                 >
                                     {lang.label}

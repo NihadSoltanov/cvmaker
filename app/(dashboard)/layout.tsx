@@ -21,8 +21,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Sidebar */}
             <aside className="w-64 border-r border-neutral-200/50 dark:border-neutral-800/50 bg-white/60 dark:bg-black/40 backdrop-blur-3xl flex flex-col p-6 fixed h-full z-40 transition-all shadow-xl shadow-black/5">
                 <Link href="/dashboard" className="flex items-center gap-3 mb-10 group mt-2">
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-xl leading-none shadow-md shadow-indigo-500/30 group-hover:scale-105 transition-transform duration-300">
-                        A
+                    <div className="w-10 h-10 rounded-full bg-black dark:bg-white flex items-center justify-center border border-neutral-200 dark:border-neutral-800 shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-white dark:text-black">
+                            <path d="M12 4L20 18H4L12 4Z" fill="currentColor" />
+                        </svg>
                     </div>
                     <span className="font-extrabold text-lg tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">AI CV Optimizer</span>
                 </Link>
@@ -35,8 +37,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300 ${isActive
-                                        ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 scale-[1.02]'
-                                        : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50 hover:text-neutral-900 dark:hover:text-neutral-100 hover:scale-[1.02]'
+                                    ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 scale-[1.02]'
+                                    : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50 hover:text-neutral-900 dark:hover:text-neutral-100 hover:scale-[1.02]'
                                     }`}
                             >
                                 <item.icon className="w-5 h-5 flex-shrink-0" />

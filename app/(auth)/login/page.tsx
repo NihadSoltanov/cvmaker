@@ -1,7 +1,22 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function LoginPage() {
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        // Simulate auth
+        setTimeout(() => {
+            router.push("/dashboard");
+        }, 1000);
+    };
     return (
         <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
             <div className="absolute top-1/4 right-1/4 w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
@@ -14,16 +29,18 @@ export default function LoginPage() {
                 <h1 className="text-2xl font-bold mb-2">Welcome back</h1>
                 <p className="text-neutral-500 text-sm mb-8">Log in to manage your tailored applications.</p>
 
-                <form className="space-y-4">
+                <form className="space-y-4" onSubmit={handleSubmit}>
                     <div>
                         <label className="block text-sm font-medium mb-1">Email</label>
-                        <input type="email" placeholder="you@example.com" className="input-styled" />
+                        <input type="email" placeholder="you@example.com" className="input-styled" required />
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-1">Password</label>
-                        <input type="password" placeholder="••••••••" className="input-styled" />
+                        <input type="password" placeholder="••••••••" className="input-styled" required />
                     </div>
-                    <button className="btn-primary w-full mt-2">Log In</button>
+                    <button type="submit" disabled={isLoading} className="btn-primary w-full mt-2">
+                        {isLoading ? "Logging in..." : "Log In"}
+                    </button>
                 </form>
 
                 <div className="my-6 flex items-center gap-4">
