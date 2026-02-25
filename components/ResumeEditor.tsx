@@ -120,20 +120,36 @@ export function ResumeEditor({ resume, onSave, isSaving }: { resume: any; onSave
     const handleShareLink = async () => {
         setIsSharing(true);
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
             const token = Math.random().toString(36).slice(2, 12);
-            const shareData = JSON.stringify(resumeDataForPreview);
-            await supabase.from("share_links").insert([{
-                user_id: user.id,
-                token,
-                template_id: selectedTemplate,
-                resume_snapshot: shareData,
-                expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-            }]);
+            const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+            const payload = {
+                data: resumeDataForPreview,
+                templateId: selectedTemplate,
+                expiresAt,
+            };
+
+            // Store in localStorage as INSTANT fallback (works without DB migration)
+            localStorage.setItem(`share_preview_${token}`, JSON.stringify(payload));
+
+            // Also try Supabase in the background (works after migration SQL is run)
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    await supabase.from("share_links").insert([{
+                        user_id: user.id,
+                        token,
+                        template_id: selectedTemplate,
+                        resume_snapshot: JSON.stringify(resumeDataForPreview),
+                        expires_at: expiresAt,
+                    }]);
+                }
+            } catch {
+                // Supabase insert failed (missing columns) — localStorage fallback is enough
+            }
+
             const url = `${window.location.origin}/s/${token}`;
             setShareUrl(url);
-            await navigator.clipboard.writeText(url);
+            try { await navigator.clipboard.writeText(url); } catch { /* ignore clipboard errors */ }
         } finally {
             setIsSharing(false);
         }

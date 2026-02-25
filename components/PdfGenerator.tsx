@@ -2,7 +2,7 @@
 
 import React from "react";
 import {
-    Document, Page, Text, View, StyleSheet, Font, PDFDownloadLink,
+    Document, Page, Text, View, StyleSheet, Font,
 } from "@react-pdf/renderer";
 import type { CvData } from "./CvTemplates";
 
@@ -247,26 +247,44 @@ export function getPdfDocument(templateId: string, data: CvData): React.ReactEle
     }
 }
 
-// Download Button Component
+// Download Button Component — uses programmatic blob approach for proper filename
 export function PdfDownloadButton({ data, templateId, fileName }: {
     data: CvData;
     templateId: string;
     fileName?: string;
 }) {
-    const name = fileName || `CV_${data.basicInfo?.fullName?.replace(/\s/g, "_") || "resume"}.pdf`;
-    const doc = getPdfDocument(templateId, data);
+    const [loading, setLoading] = React.useState(false);
+
+    const handleClick = async () => {
+        setLoading(true);
+        try {
+            const { pdf } = await import("@react-pdf/renderer");
+            const doc = getPdfDocument(templateId, data);
+            const blob = await pdf(doc as any).toBlob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = fileName || `CV_${data.basicInfo?.fullName?.replace(/\s+/g, "_") || "Resume"}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (err) {
+            console.error("PDF error:", err);
+            alert("PDF generation failed. Please try again.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        <PDFDownloadLink document={doc as any} fileName={name}>
-            {({ loading, error }: { loading: boolean; error: Error | null }) => (
-                <span className={`flex items-center gap-2 bg-green-600 text-white rounded-xl px-4 py-2.5 font-bold hover:bg-green-700 transition text-sm cursor-pointer ${loading ? "opacity-60" : ""}`}>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-8m0 8l-3-3m3 3l3-3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
-                    </svg>
-                    {loading ? "Building PDF..." : error ? "Error – Retry" : "Download PDF"}
-                </span>
-            )}
-        </PDFDownloadLink>
+        <button onClick={handleClick} disabled={loading}
+            className="flex items-center gap-2 bg-green-600 text-white rounded-xl px-4 py-2.5 font-bold hover:bg-green-700 transition disabled:opacity-60 text-sm">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-8m0 8l-3-3m3 3l3-3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+            </svg>
+            {loading ? "Generating PDF…" : "Download PDF"}
+        </button>
     );
 }
+
