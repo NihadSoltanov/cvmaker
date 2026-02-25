@@ -1,12 +1,54 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, FileText, Zap, Clock, Settings, LogOut } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const checkUser = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                router.push("/login");
+            } else {
+                setIsLoading(false);
+            }
+        };
+        checkUser();
+
+        const { data: authListener } = supabase.auth.onAuthStateChange(
+            (event, session) => {
+                if (event === "SIGNED_OUT" || !session) {
+                    router.push("/login");
+                }
+            }
+        );
+
+        return () => {
+            authListener.subscription.unsubscribe();
+        };
+    }, [router]);
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        router.push("/login");
+    };
+
+    if (isLoading) {
+        return <div className="min-h-screen bg-neutral-50 dark:bg-black font-sans flex items-center justify-center">
+            <span className="flex items-center gap-3 font-semibold text-lg text-neutral-500">
+                <div className="w-6 h-6 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+                Loading Workspace...
+            </span>
+        </div>;
+    }
 
     const navItems = [
         { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -50,7 +92,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                 <div className="mt-auto border-t border-neutral-200/50 dark:border-neutral-800/50 pt-6 space-y-4">
                     <LanguageSwitcher />
-                    <button className="flex items-center gap-4 px-4 py-3 w-full text-left rounded-2xl text-sm font-bold transition-all duration-300 text-neutral-500 dark:text-neutral-400 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 dark:hover:text-red-400 hover:scale-[1.02]">
+                    <button onClick={handleLogout} className="flex items-center gap-4 px-4 py-3 w-full text-left rounded-2xl text-sm font-bold transition-all duration-300 text-neutral-500 dark:text-neutral-400 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 dark:hover:text-red-400 hover:scale-[1.02]">
                         <LogOut className="w-5 h-5 flex-shrink-0" />
                         Log out
                     </button>

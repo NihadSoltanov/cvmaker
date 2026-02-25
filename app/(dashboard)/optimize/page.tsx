@@ -1,31 +1,81 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { JobPasteBox } from "@/components/JobPasteBox";
 import { ResultsTabs } from "@/components/ResultsTabs";
 import { Zap } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export default function OptimizePage() {
     const [jdText, setJdText] = useState("");
     const [isGenerating, setIsGenerating] = useState(false);
     const [results, setResults] = useState<unknown>(null);
 
+    const [resumeData, setResumeData] = useState<any>(null);
+    const [resumeId, setResumeId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchResume = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data } = await supabase.from("resumes").select("id, resume_json").eq("user_id", user.id).single();
+                if (data) {
+                    setResumeData(data.resume_json);
+                    setResumeId(data.id);
+                }
+            }
+        };
+        fetchResume();
+    }, []);
+
     const handleOptimize = async () => {
+        if (!resumeData) {
+            alert("Please save a Master CV first in the My CV page.");
+            return;
+        }
         setIsGenerating(true);
-        // Simulate generation delay
-        setTimeout(() => {
-            setIsGenerating(false);
-            setResults({
-                coverLetter: "Dear Hiring Manager,\n\nI am writing to express my interest...",
-                applicationText: "Hi there, attached is my application...",
-                linkedinMessages: {
-                    recruiter: "Hi [Name], I noticed you are recruiting for...",
-                    hiring_manager: "Hello [Name], I am reaching out regarding...",
-                    referral: "Hi [Name], I see we both connected at..."
-                },
-                missingRequirements: ["Experience with GraphQL (Suggested: take a short tutorial to list it)"]
+
+        try {
+            const res = await fetch("/api/ai/optimize", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    resumeJson: resumeData,
+                    jdText,
+                    language: "en",
+                    tone: "professional"
+                })
             });
-        }, 2000);
+
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error || "Generation failed");
+
+            // Save to tailored_outputs
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user && resumeId) {
+                await supabase.from("tailored_outputs").insert([{
+                    user_id: user.id,
+                    resume_id: resumeId,
+                    output_language: "en",
+                    tone: "professional",
+                    tailored_resume_json: data.tailored_resume_json || {},
+                    cover_letter: data.cover_letter || "",
+                    application_text: data.application_text || "",
+                    linkedin_messages: data.linkedin_messages || {},
+                    ats_keywords_used: data.ats_keywords_used || [],
+                    missing_requirements: data.missing_requirements || [],
+                    suggestions: data.suggestions || {}
+                }]);
+            }
+
+            setResults(data);
+        } catch (error) {
+            console.error("Optimize error:", error);
+            alert("Error during optimization. Please try again.");
+        } finally {
+            setIsGenerating(false);
+        }
     };
 
     return (

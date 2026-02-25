@@ -1,8 +1,28 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, FileText, Zap, Clock, Star } from "lucide-react";
 import { BackgroundBeams } from "@/components/ui/background-beams";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function DashboardOverview() {
+    const [fullName, setFullName] = useState("");
+    const [plan, setPlan] = useState("free");
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
+                if (profile) setFullName(profile.full_name || "User");
+
+                const { data: sub } = await supabase.from("subscriptions").select("plan").eq("user_id", user.id).single();
+                if (sub) setPlan(sub.plan || "free");
+            }
+        };
+        fetchDashboardData();
+    }, []);
     return (
         <div className="space-y-12 relative z-10 w-full h-full pb-20">
             <BackgroundBeams className="opacity-50" />
@@ -11,7 +31,7 @@ export default function DashboardOverview() {
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-neutral-200/20 bg-white/50 dark:bg-black/50 backdrop-blur-md text-neutral-600 dark:text-neutral-400 text-xs font-bold tracking-widest uppercase mb-4 shadow-sm">
                     Overview
                 </div>
-                <h1 className="text-4xl sm:text-5xl font-black mb-3 text-neutral-900 dark:text-white tracking-tighter">Welcome back, Nihad.</h1>
+                <h1 className="text-4xl sm:text-5xl font-black mb-3 text-neutral-900 dark:text-white tracking-tighter">Welcome back, {fullName ? fullName.split(' ')[0] : 'there'}.</h1>
                 <p className="text-lg font-medium text-neutral-500 dark:text-neutral-400 max-w-2xl">Your personalized command center. Edit your base resume, generate tailored applications for specific roles, and track your history here.</p>
             </div>
 
@@ -53,12 +73,18 @@ export default function DashboardOverview() {
             <div className="mt-12 w-full p-8 rounded-[2rem] border border-neutral-200 dark:border-neutral-800 bg-neutral-100/50 dark:bg-neutral-900/50 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative overflow-hidden">
                 <div className="absolute left-0 top-0 h-full w-2 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-l-[2rem]" />
                 <div>
-                    <h4 className="font-extrabold text-xl mb-1 flex items-center gap-2"><Star className="w-5 h-5 text-indigo-500 fill-indigo-500" /> Current Plan: Free Trial</h4>
-                    <p className="text-neutral-500 dark:text-neutral-400 font-medium">You have <strong className="text-indigo-600 dark:text-indigo-400">3 of 3</strong> generations remaining this month.</p>
+                    <h4 className="font-extrabold text-xl mb-1 flex items-center gap-2 capitalize"><Star className="w-5 h-5 text-indigo-500 fill-indigo-500" /> Current Plan: {plan}</h4>
+                    {plan === 'free' ? (
+                        <p className="text-neutral-500 dark:text-neutral-400 font-medium">You are on the standard tier. Upgrade to unlock more.</p>
+                    ) : (
+                        <p className="text-neutral-500 dark:text-neutral-400 font-medium">You have <strong className="text-indigo-600 dark:text-indigo-400">unlimited</strong> generations remaining this month.</p>
+                    )}
                 </div>
-                <Link href="/pricing" className="whitespace-nowrap inline-flex items-center justify-center rounded-xl font-bold transition-all disabled:pointer-events-none disabled:opacity-50 h-12 px-6 hover:scale-105 active:scale-95 bg-indigo-600 text-white shadow-[0_0_20px_rgba(99,102,241,0.4)]">
-                    Upgrade to Pro
-                </Link>
+                {plan === 'free' && (
+                    <Link href="/pricing" className="whitespace-nowrap inline-flex items-center justify-center rounded-xl font-bold transition-all disabled:pointer-events-none disabled:opacity-50 h-12 px-6 hover:scale-105 active:scale-95 bg-indigo-600 text-white shadow-[0_0_20px_rgba(99,102,241,0.4)]">
+                        Upgrade to Pro
+                    </Link>
+                )}
             </div>
         </div>
     );
