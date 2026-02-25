@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Plus, Trash2, Edit3, LayoutTemplate, Save, Camera, X, Download, AlertCircle, Link2 } from "lucide-react";
+import { Plus, Trash2, Edit3, LayoutTemplate, Save, Camera, X, AlertCircle, Link2 } from "lucide-react";
 import { TemplatePicker, CvTemplateRenderer, CV_TEMPLATES, type CvData } from "@/components/CvTemplates";
+import { PdfDownloadButton } from "@/components/PdfGenerator";
 import { GuideButton } from "@/components/GuideButton";
 import { supabase } from "@/lib/supabase";
 
@@ -30,7 +31,6 @@ export function ResumeEditor({ resume, onSave, isSaving }: { resume: any; onSave
     const [selectedTemplate, setSelectedTemplate] = useState("classic");
     const [isPaidUser, setIsPaidUser] = useState(false);
     const [downloadCount, setDownloadCount] = useState(0);
-    const [isDownloading, setIsDownloading] = useState(false);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const [shareUrl, setShareUrl] = useState<string | null>(null);
     const [isSharing, setIsSharing] = useState(false);
@@ -116,60 +116,6 @@ export function ResumeEditor({ resume, onSave, isSaving }: { resume: any; onSave
         });
     };
 
-    const handleDownload = async () => {
-        const FREE_LIMIT = 2;
-        if (!isPaidUser && downloadCount >= FREE_LIMIT) {
-            alert(`Free plan allows ${FREE_LIMIT} PDF downloads per month. Upgrade to Pro for unlimited downloads.`);
-            return;
-        }
-        if (!previewRef.current) {
-            alert("Please switch to 'Live Preview' tab first, then download.");
-            setActiveTab("preview");
-            return;
-        }
-        setIsDownloading(true);
-        try {
-            const html2canvas = (await import("html2canvas")).default;
-            const jsPDF = (await import("jspdf")).default;
-
-            const canvas = await html2canvas(previewRef.current, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: "#ffffff",
-                logging: false,
-            });
-
-            const imgData = canvas.toDataURL("image/png");
-            const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-            const pdfW = pdf.internal.pageSize.getWidth();
-            const pdfH = (canvas.height * pdfW) / canvas.width;
-
-            // Multi-page support
-            const pageHeight = pdf.internal.pageSize.getHeight();
-            let position = 0;
-            let remaining = pdfH;
-            let first = true;
-            while (remaining > 0) {
-                if (!first) pdf.addPage();
-                pdf.addImage(imgData, "PNG", 0, -position, pdfW, pdfH);
-                position += pageHeight;
-                remaining -= pageHeight;
-                first = false;
-            }
-
-            pdf.save(`CV_${basicInfo.fullName.replace(/\s/g, "_") || "resume"}.pdf`);
-
-            // Log usage
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) await supabase.from("usage_events").insert([{ user_id: user.id, feature: "pdf_download" }]);
-            setDownloadCount(prev => prev + 1);
-        } catch (err) {
-            console.error("PDF generation error:", err);
-            alert("PDF generation failed. Please try again.");
-        } finally {
-            setIsDownloading(false);
-        }
-    };
 
     const handleShareLink = async () => {
         setIsSharing(true);
@@ -210,7 +156,6 @@ export function ResumeEditor({ resume, onSave, isSaving }: { resume: any; onSave
         languages: languages.split(",").map(s => s.trim()).filter(Boolean),
         photo: photoPreview,
         certifications,
-        awards,
         volunteerWork,
     };
 
@@ -226,7 +171,7 @@ export function ResumeEditor({ resume, onSave, isSaving }: { resume: any; onSave
                             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold capitalize transition-all ${activeTab === tab ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-sm" : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"}`}>
                             {tab === "edit" && <Edit3 className="w-3.5 h-3.5" />}
                             {tab === "templates" && <LayoutTemplate className="w-3.5 h-3.5" />}
-                            {tab === "preview" && <Download className="w-3.5 h-3.5" />}
+                            {tab === "preview" && <LayoutTemplate className="w-3.5 h-3.5" />}
                             {tab === "edit" ? "CV Details" : tab === "templates" ? "Choose Template" : "Live Preview"}
                         </button>
                     ))}
@@ -245,11 +190,7 @@ export function ResumeEditor({ resume, onSave, isSaving }: { resume: any; onSave
                         {isSharing ? "Creating..." : shareUrl ? "✓ Link Copied!" : "Share Link"}
                     </button>
 
-                    <button onClick={handleDownload} disabled={isDownloading}
-                        className="flex items-center gap-2 bg-green-600 text-white rounded-xl px-4 py-2.5 font-bold hover:bg-green-700 transition disabled:opacity-50 text-sm">
-                        <Download className="w-4 h-4" />
-                        {isDownloading ? "Generating PDF..." : "Download PDF"}
-                    </button>
+                    <PdfDownloadButton data={resumeDataForPreview} templateId={selectedTemplate} />
 
                     <button onClick={handleSave} disabled={isSaving}
                         className="flex items-center gap-2 bg-indigo-600 text-white rounded-xl px-4 py-2.5 font-bold hover:bg-indigo-700 transition disabled:opacity-50 text-sm">
@@ -464,7 +405,7 @@ export function ResumeEditor({ resume, onSave, isSaving }: { resume: any; onSave
                 {/* ====== PREVIEW TAB ====== */}
                 {activeTab === "preview" && (
                     <div className="bg-neutral-200 dark:bg-neutral-950 min-h-full flex flex-col items-center py-8 px-4">
-                        <div className="mb-4 flex items-center gap-4">
+                        <div className="mb-4 flex items-center gap-4 flex-wrap">
                             <p className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">
                                 Template: <span className="text-neutral-800 dark:text-white font-bold">{currentTemplateDef?.name}</span>
                                 {currentTemplateDef?.hasPhoto && <span className="ml-2 text-blue-500 text-xs">(with photo support)</span>}
@@ -472,10 +413,7 @@ export function ResumeEditor({ resume, onSave, isSaving }: { resume: any; onSave
                             <button onClick={() => setActiveTab("templates")} className="text-xs text-indigo-600 dark:text-indigo-400 underline font-bold">
                                 Change template
                             </button>
-                            <button onClick={handleDownload} disabled={isDownloading} className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-green-700 transition disabled:opacity-50">
-                                <Download className="w-4 h-4" />
-                                {isDownloading ? "Opening..." : "Download as PDF"}
-                            </button>
+                            <PdfDownloadButton data={resumeDataForPreview} templateId={selectedTemplate} />
                         </div>
                         <div ref={previewRef} className="w-full max-w-[800px] shadow-2xl overflow-hidden" style={{ zoom: 0.85 }}>
                             <CvTemplateRenderer templateId={selectedTemplate} data={resumeDataForPreview} />
