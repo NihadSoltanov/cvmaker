@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Plus, Trash2, Edit3, LayoutTemplate, Save, Camera, X, Star, Download, AlertCircle } from "lucide-react";
-import { TemplatePicker, CvTemplateRenderer, CV_TEMPLATES } from "@/components/CvTemplates";
+import { Plus, Trash2, Edit3, LayoutTemplate, Save, Camera, X, Download, AlertCircle, Link2 } from "lucide-react";
+import { TemplatePicker, CvTemplateRenderer, CV_TEMPLATES, type CvData } from "@/components/CvTemplates";
 import { GuideButton } from "@/components/GuideButton";
 import { supabase } from "@/lib/supabase";
 
@@ -25,13 +25,15 @@ type ResumeData = {
     photo?: string | null;
 };
 
-export function ResumeEditor({ resume, onSave, isSaving }: { resume: ResumeData | null; onSave: (data: any) => void; isSaving: boolean }) {
+export function ResumeEditor({ resume, onSave, isSaving }: { resume: any; onSave: (data: any) => void; isSaving: boolean }) {
     const [activeTab, setActiveTab] = useState<"edit" | "preview" | "templates">("edit");
     const [selectedTemplate, setSelectedTemplate] = useState("classic");
     const [isPaidUser, setIsPaidUser] = useState(false);
     const [downloadCount, setDownloadCount] = useState(0);
     const [isDownloading, setIsDownloading] = useState(false);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+    const [shareUrl, setShareUrl] = useState<string | null>(null);
+    const [isSharing, setIsSharing] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const previewRef = useRef<HTMLDivElement>(null);
 
@@ -42,6 +44,9 @@ export function ResumeEditor({ resume, onSave, isSaving }: { resume: ResumeData 
     const [education, setEducation] = useState<any[]>([{ institution: "", degree: "", startDate: "", endDate: "" }]);
     const [projects, setProjects] = useState<any[]>([]);
     const [skills, setSkills] = useState("");
+    const [certifications, setCertifications] = useState<any[]>([]);
+    const [volunteerWork, setVolunteerWork] = useState<any[]>([]);
+    const [awards, setAwards] = useState<any[]>([]);
     const [languages, setLanguages] = useState("");
 
     useEffect(() => {
@@ -117,30 +122,74 @@ export function ResumeEditor({ resume, onSave, isSaving }: { resume: ResumeData 
             alert(`Free plan allows ${FREE_LIMIT} PDF downloads per month. Upgrade to Pro for unlimited downloads.`);
             return;
         }
+        if (!previewRef.current) {
+            alert("Please switch to 'Live Preview' tab first, then download.");
+            setActiveTab("preview");
+            return;
+        }
         setIsDownloading(true);
         try {
-            // Log download event
+            const html2canvas = (await import("html2canvas")).default;
+            const jsPDF = (await import("jspdf")).default;
+
+            const canvas = await html2canvas(previewRef.current, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: "#ffffff",
+                logging: false,
+            });
+
+            const imgData = canvas.toDataURL("image/png");
+            const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+            const pdfW = pdf.internal.pageSize.getWidth();
+            const pdfH = (canvas.height * pdfW) / canvas.width;
+
+            // Multi-page support
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            let position = 0;
+            let remaining = pdfH;
+            let first = true;
+            while (remaining > 0) {
+                if (!first) pdf.addPage();
+                pdf.addImage(imgData, "PNG", 0, -position, pdfW, pdfH);
+                position += pageHeight;
+                remaining -= pageHeight;
+                first = false;
+            }
+
+            pdf.save(`CV_${basicInfo.fullName.replace(/\s/g, "_") || "resume"}.pdf`);
+
+            // Log usage
             const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                await supabase.from("usage_events").insert([{ user_id: user.id, feature: "pdf_download" }]);
-            }
-            // Use browser print as PDF
-            const printContent = previewRef.current?.innerHTML;
-            if (!printContent) return;
-            const win = window.open("", "_blank");
-            if (win) {
-                win.document.write(`<html><head><title>CV - ${basicInfo.fullName}</title>
-                    <style>
-                        body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                        @page { margin: 0; }
-                    </style>
-                </head><body>${printContent}</body></html>`);
-                win.document.close();
-                setTimeout(() => { win.print(); }, 500);
-            }
+            if (user) await supabase.from("usage_events").insert([{ user_id: user.id, feature: "pdf_download" }]);
             setDownloadCount(prev => prev + 1);
+        } catch (err) {
+            console.error("PDF generation error:", err);
+            alert("PDF generation failed. Please try again.");
         } finally {
             setIsDownloading(false);
+        }
+    };
+
+    const handleShareLink = async () => {
+        setIsSharing(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            const token = Math.random().toString(36).slice(2, 12);
+            const shareData = JSON.stringify(resumeDataForPreview);
+            await supabase.from("share_links").insert([{
+                user_id: user.id,
+                token,
+                template_id: selectedTemplate,
+                resume_snapshot: shareData,
+                expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+            }]);
+            const url = `${window.location.origin}/s/${token}`;
+            setShareUrl(url);
+            await navigator.clipboard.writeText(url);
+        } finally {
+            setIsSharing(false);
         }
     };
 
@@ -151,7 +200,7 @@ export function ResumeEditor({ resume, onSave, isSaving }: { resume: ResumeData 
     const removeArrayItem = (setter: React.Dispatch<React.SetStateAction<any[]>>, index: number) => setter(prev => prev.filter((_, i) => i !== index));
 
     const currentTemplateDef = CV_TEMPLATES.find(t => t.id === selectedTemplate);
-    const resumeDataForPreview = {
+    const resumeDataForPreview: CvData = {
         basicInfo,
         summary,
         experience,
@@ -160,6 +209,9 @@ export function ResumeEditor({ resume, onSave, isSaving }: { resume: ResumeData 
         skills: skills.split(",").map(s => s.trim()).filter(Boolean),
         languages: languages.split(",").map(s => s.trim()).filter(Boolean),
         photo: photoPreview,
+        certifications,
+        awards,
+        volunteerWork,
     };
 
     const FREE_LIMIT = 2;
@@ -174,39 +226,29 @@ export function ResumeEditor({ resume, onSave, isSaving }: { resume: ResumeData 
                             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold capitalize transition-all ${activeTab === tab ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-sm" : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"}`}>
                             {tab === "edit" && <Edit3 className="w-3.5 h-3.5" />}
                             {tab === "templates" && <LayoutTemplate className="w-3.5 h-3.5" />}
-                            {tab === "preview" && <Star className="w-3.5 h-3.5" />}
+                            {tab === "preview" && <Download className="w-3.5 h-3.5" />}
                             {tab === "edit" ? "CV Details" : tab === "templates" ? "Choose Template" : "Live Preview"}
                         </button>
                     ))}
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
-                    <GuideButton guide={{
-                        title: "My CV — How to Use",
-                        steps: [
-                            "Fill in all fields under 'CV Details'. Fields marked with * are required for ATS systems.",
-                            "Go to 'Choose Template' to pick your CV style. Recommended is the Classic ATS template.",
-                            "Click 'Live Preview' to see your finished CV as it would look on paper.",
-                            "Click 'Save Master CV' to save your data — this will be used when you Optimize.",
-                            "Click 'Download as PDF' to get a print-ready PDF of your chosen template.",
-                        ],
-                        tips: [
-                            "Use bullet points (•) in experience descriptions for better ATS readability.",
-                            "Keep your summary under 4 sentences for recruiters who skim quickly.",
-                            "Free users can download 2 PDFs per month. Upgrade for unlimited.",
-                        ]
-                    }} />
-
                     {!isPaidUser && (
                         <span className="text-xs font-bold text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-3 py-2 rounded-xl">
                             {FREE_LIMIT - downloadCount} of {FREE_LIMIT} downloads left
                         </span>
                     )}
 
+                    <button onClick={handleShareLink} disabled={isSharing}
+                        className="flex items-center gap-2 bg-blue-600 text-white rounded-xl px-4 py-2.5 font-bold hover:bg-blue-700 transition disabled:opacity-50 text-sm">
+                        <Link2 className="w-4 h-4" />
+                        {isSharing ? "Creating..." : shareUrl ? "✓ Link Copied!" : "Share Link"}
+                    </button>
+
                     <button onClick={handleDownload} disabled={isDownloading}
                         className="flex items-center gap-2 bg-green-600 text-white rounded-xl px-4 py-2.5 font-bold hover:bg-green-700 transition disabled:opacity-50 text-sm">
                         <Download className="w-4 h-4" />
-                        {isDownloading ? "Preparing..." : "Download PDF"}
+                        {isDownloading ? "Generating PDF..." : "Download PDF"}
                     </button>
 
                     <button onClick={handleSave} disabled={isSaving}
@@ -216,6 +258,13 @@ export function ResumeEditor({ resume, onSave, isSaving }: { resume: ResumeData 
                     </button>
                 </div>
             </div>
+            {shareUrl && (
+                <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-700 text-xs text-blue-700 dark:text-blue-300 flex items-center gap-3">
+                    <span>🔗 Share Link (30 days):</span>
+                    <a href={shareUrl} target="_blank" className="underline font-mono font-bold break-all">{shareUrl}</a>
+                    <button onClick={() => navigator.clipboard.writeText(shareUrl)} className="text-blue-600 dark:text-blue-400 font-bold hover:underline flex-shrink-0">Copy</button>
+                </div>
+            )}
 
             {/* Content */}
             <div className="flex-1 overflow-auto">

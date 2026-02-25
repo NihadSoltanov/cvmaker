@@ -1,32 +1,67 @@
-import { FileText, Download } from "lucide-react";
+import { notFound } from "next/navigation";
+import { createClient } from "@supabase/supabase-js";
+import { CvTemplateRenderer } from "@/components/CvTemplates";
 
-export default function ShareLinkPage({ params }: { params: { token: string } }) {
-    // Normally search DB for tailored_outputs via token
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+export default async function SharePage({ params }: { params: { token: string } }) {
+    const { data, error } = await supabase
+        .from("share_links")
+        .select("*")
+        .eq("token", params.token)
+        .maybeSingle();
+
+    if (!data || error) return notFound();
+
+    // Check expiry
+    if (data.expires_at && new Date(data.expires_at) < new Date()) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-neutral-100">
+                <div className="text-center p-8 bg-white rounded-3xl shadow-xl">
+                    <div className="text-4xl mb-4">⏳</div>
+                    <h1 className="text-2xl font-bold text-neutral-900 mb-2">Link Expired</h1>
+                    <p className="text-neutral-500">This share link has expired. Please ask the owner to generate a new one.</p>
+                </div>
+            </div>
+        );
+    }
+
+    let resumeData: any = {};
+    try {
+        resumeData = JSON.parse(data.resume_snapshot || "{}");
+    } catch {
+        resumeData = {};
+    }
+
+    const templateId = data.template_id || "classic";
+
     return (
-        <div className="min-h-screen bg-neutral-100 dark:bg-neutral-950 flex flex-col items-center justify-center p-4">
-            <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-indigo-500/20 to-transparent pointer-events-none" />
-
-            <div className="max-w-4xl w-full z-10 glass-card p-8 rounded-3xl">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-6 border-b border-neutral-200 dark:border-neutral-800">
-                    <div>
-                        <h1 className="text-3xl font-bold mb-1 tracking-tight">John Doe</h1>
-                        <p className="text-neutral-500 flex items-center gap-2"><FileText className="w-4 h-4" /> Tailored Application Profile</p>
-                    </div>
-                    <button className="btn-primary rounded-xl mt-4 sm:mt-0 shadow-lg">
-                        <Download className="w-4 h-4 mr-2" /> Download PDF
-                    </button>
+        <div className="min-h-screen bg-neutral-200 py-8 px-4">
+            <div className="text-center mb-6">
+                <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-md px-4 py-2 rounded-full text-sm font-semibold text-neutral-600 border border-neutral-200 shadow-sm mb-4">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    </svg>
+                    Shared CV · View only
                 </div>
+                <p className="text-xs text-neutral-400">
+                    Powered by <span className="font-bold text-neutral-600">AI CV Optimizer</span>
+                    {data.expires_at && ` · Expires ${new Date(data.expires_at).toLocaleDateString()}`}
+                </p>
+            </div>
 
-                <div className="prose dark:prose-invert max-w-none text-sm text-neutral-700 dark:text-neutral-300">
-                    <p className="text-lg">This page securely displays the shared resume context representing the candidate.</p>
-                    <div className="w-full h-64 bg-neutral-50 dark:bg-neutral-900 rounded-2xl flex items-center justify-center mt-8 border border-neutral-200 dark:border-neutral-800 font-mono text-center px-4">
-                        [ Render detailed interactive resume layout based on JSON here ]
-                    </div>
-                </div>
+            <div className="max-w-[800px] mx-auto shadow-2xl overflow-hidden rounded-lg">
+                <CvTemplateRenderer templateId={templateId} data={resumeData} />
+            </div>
 
-                <div className="mt-8 text-center border-t border-neutral-200 dark:border-neutral-800 pt-6">
-                    <p className="text-xs text-neutral-400 mb-2">Powered by AI CV Optimizer</p>
-                </div>
+            <div className="text-center mt-8">
+                <a href="/" className="inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-500/20">
+                    Create Your Own CV →
+                </a>
             </div>
         </div>
     );

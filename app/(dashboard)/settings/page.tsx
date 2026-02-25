@@ -14,6 +14,7 @@ export default function SettingsPage() {
     const [status, setStatus] = useState("inactive");
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [isDemoLoading, setIsDemoLoading] = useState(false);
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -44,6 +45,30 @@ export default function SettingsPage() {
             alert("Profile updated successfully");
         }
         setIsSaving(false);
+    };
+
+    const handleDemoSubscribe = async () => {
+        setIsDemoLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { setIsDemoLoading(false); return; }
+        const { data: existing } = await supabase.from("subscriptions").select("id").eq("user_id", user.id).maybeSingle();
+        if (existing) {
+            await supabase.from("subscriptions").update({ plan: "pro", status: "active" }).eq("id", existing.id);
+        } else {
+            await supabase.from("subscriptions").insert([{ user_id: user.id, plan: "pro", status: "active" }]);
+        }
+        setPlan("pro"); setStatus("active");
+        setIsDemoLoading(false);
+    };
+
+    const handleDemoCancel = async () => {
+        if (!confirm("Cancel Pro subscription? You will be downgraded to Free.")) return;
+        setIsDemoLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { setIsDemoLoading(false); return; }
+        await supabase.from("subscriptions").update({ plan: "free", status: "canceled" }).eq("user_id", user.id);
+        setPlan("free"); setStatus("canceled");
+        setIsDemoLoading(false);
     };
 
     const handleDeleteData = async () => {
@@ -110,20 +135,54 @@ export default function SettingsPage() {
                 <div className="bg-white/60 dark:bg-black/40 backdrop-blur-xl border border-neutral-200 dark:border-neutral-800 p-8 rounded-[2rem] space-y-6 shadow-sm">
                     <h2 className="text-2xl font-bold border-b border-neutral-200 dark:border-neutral-800/80 pb-4">Subscription & Data</h2>
 
-                    <div className="p-6 rounded-2xl bg-indigo-50/80 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800/50">
-                        <h3 className="font-bold text-indigo-700 dark:text-indigo-400 text-lg flex justify-between items-center capitalize">
-                            {plan} Plan
-                            <span className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs uppercase tracking-wider rounded-md font-bold">{status}</span>
+                    {/* Current Plan */}
+                    <div className={`p-6 rounded-2xl border ${plan === "pro" ? "bg-indigo-50/80 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800/50" : "bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800"}`}>
+                        <h3 className="font-bold text-lg flex justify-between items-center capitalize">
+                            <span className={plan === "pro" ? "text-indigo-700 dark:text-indigo-400" : "text-neutral-700 dark:text-neutral-300"}>{plan} Plan</span>
+                            <span className={`px-3 py-1 text-xs uppercase tracking-wider rounded-md font-bold ${status === "active" ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400" :
+                                "bg-neutral-100 dark:bg-neutral-800 text-neutral-500"
+                                }`}>{status || "inactive"}</span>
                         </h3>
-                        {plan === "free" && (
-                            <p className="font-medium text-indigo-600/80 dark:text-indigo-400/80 mt-2 text-sm leading-relaxed">Upgrade to Pro for unlimited generation capabilities and priority API access.</p>
+                        {plan === "pro" ? (
+                            <div className="mt-3 space-y-2 text-sm text-neutral-600 dark:text-neutral-400">
+                                <p>✅ Unlimited AI optimizations</p>
+                                <p>✅ All 6 CV templates unlocked</p>
+                                <p>✅ Unlimited PDF downloads</p>
+                                <p>✅ Priority support</p>
+                            </div>
+                        ) : (
+                            <div className="mt-3 space-y-2 text-sm text-neutral-500">
+                                <p>• 3 AI optimizations per month</p>
+                                <p>• 3 free CV templates</p>
+                                <p>• 2 PDF downloads per month</p>
+                            </div>
                         )}
                     </div>
 
-                    <div className="pt-6 mt-6 border-t border-neutral-200 dark:border-neutral-800/80">
-                        <h3 className="font-bold text-red-600 dark:text-red-400 mb-2">Danger Zone</h3>
-                        <p className="text-neutral-500 font-medium text-sm mb-4">You can permanently delete your data and account. This operation is irreversible.</p>
-                        <button onClick={handleDeleteData} className="text-red-600 dark:text-red-400 font-bold hover:underline transition-all">Delete all my data</button>
+                    {/* Demo Subscription Controls */}
+                    <div className="p-5 rounded-2xl border border-dashed border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-900/10">
+                        <p className="text-xs font-bold uppercase text-amber-600 dark:text-amber-400 mb-3">🧪 Demo Mode — Stripe Integration Coming</p>
+                        {plan !== "pro" ? (
+                            <button onClick={handleDemoSubscribe} disabled={isDemoLoading}
+                                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50">
+                                {isDemoLoading ? "Activating..." : "🚀 Demo Activate Pro Plan"}
+                            </button>
+                        ) : (
+                            <button onClick={handleDemoCancel} disabled={isDemoLoading}
+                                className="w-full bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-bold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50">
+                                {isDemoLoading ? "Canceling..." : "Cancel Subscription (Demo)"}
+                            </button>
+                        )}
+                        <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">Real Stripe billing will be connected soon. This toggles your plan for testing all Pro features.</p>
+                    </div>
+
+                    {/* Danger Zone */}
+                    <div className="p-6 rounded-2xl border border-red-200 dark:border-red-800/50 bg-red-50/50 dark:bg-red-900/5">
+                        <h3 className="font-bold text-red-700 dark:text-red-400 mb-2">⚠️ Danger Zone</h3>
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">Permanently delete all your data and sign out. This cannot be undone.</p>
+                        <button onClick={handleDeleteData} className="w-full py-2.5 rounded-xl border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 font-bold text-sm hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                            Delete My Account & Data
+                        </button>
                     </div>
                 </div>
             </div>
