@@ -32,10 +32,22 @@ export default function FindJobsPage() {
             const { data } = await supabase.from("resumes").select("resume_json").eq("user_id", user.id).maybeSingle();
             if (data?.resume_json) {
                 const rj = data.resume_json;
-                if (Array.isArray(rj.skills) && rj.skills.length > 0) setSkills(rj.skills.slice(0, 8));
+                // Filter out garbage/placeholder skills
+                const isRealSkill = (s: string) => {
+                    const l = s.toLowerCase().trim();
+                    if (l.length < 2) return false;
+                    if (/^[xcvbnmasdfghjklqwertyuiop]+$/i.test(l) && l.length < 8) return false;
+                    if (/^(test|asdf|qwerty|lorem|xxx|placeholder|sample)/i.test(l)) return false;
+                    return true;
+                };
+                if (Array.isArray(rj.skills)) {
+                    const clean = rj.skills.filter(isRealSkill);
+                    if (clean.length > 0) setSkills(clean.slice(0, 8));
+                }
                 if (rj.experience?.[0]?.role) setRole(rj.experience[0].role);
                 if (rj.basicInfo?.location) setLocation(rj.basicInfo.location);
             }
+
         };
         loadProfile();
         // Load daily search count from localStorage

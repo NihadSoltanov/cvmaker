@@ -75,7 +75,7 @@ function PdfButton({ title, content, name }: { title: string; content: string; n
 // ─────────────────────────────────────────────
 // ATS Score — large, readable
 // ─────────────────────────────────────────────
-function AtsScore({ score }: { score?: number }) {
+function AtsScore({ score, explanation }: { score?: number; explanation?: string }) {
     if (score == null) return null;
     const pct = Math.min(100, Math.max(0, score));
     const color = pct >= 80 ? "#16a34a" : pct >= 60 ? "#d97706" : "#dc2626";
@@ -87,25 +87,34 @@ function AtsScore({ score }: { score?: number }) {
     const label = pct >= 80 ? "Excellent match" : pct >= 60 ? "Good — minor gaps remain" : "Needs improvement";
 
     return (
-        <div className={`flex items-center gap-5 p-5 rounded-2xl border-2 ${bgClass} mb-5`}>
-            {/* Big circular score */}
-            <div className="relative w-20 h-20 flex-shrink-0">
-                <svg className="w-20 h-20 -rotate-90" viewBox="0 0 36 36">
-                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e5e7eb" strokeWidth="3" />
-                    <circle cx="18" cy="18" r="15.9" fill="none"
-                        stroke={color} strokeWidth="3.5"
-                        strokeDasharray={`${pct} 100`} strokeLinecap="round" />
-                </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-2xl font-black" style={{ color }}>{pct}</span>
+        <div className={`p-5 rounded-2xl border-2 ${bgClass} mb-5`}>
+            <div className="flex items-center gap-5">
+                {/* Big circular score */}
+                <div className="relative w-20 h-20 flex-shrink-0">
+                    <svg className="w-20 h-20 -rotate-90" viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e5e7eb" strokeWidth="3" />
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke={color} strokeWidth="3.5"
+                            strokeDasharray={`${pct} 100`} strokeLinecap="round" />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-2xl font-black" style={{ color }}>{pct}</span>
+                </div>
+                <div>
+                    <p className="text-2xl font-black" style={{ color }}>ATS Score: {pct}/100</p>
+                    <p className="text-neutral-500 dark:text-neutral-400 font-medium mt-0.5">{label}</p>
+                </div>
             </div>
-            <div>
-                <p className="text-2xl font-black" style={{ color }}>ATS Score: {pct}/100</p>
-                <p className="text-neutral-500 dark:text-neutral-400 font-medium mt-0.5">{label}</p>
-                <p className="text-xs text-neutral-400 mt-1">Based on keyword match, experience relevance, and skills alignment</p>
-            </div>
+            {/* Score explanation */}
+            {explanation && (
+                <div className="mt-4 pt-4 border-t border-neutral-200/50 dark:border-neutral-700/50">
+                    <p className="text-xs font-black uppercase tracking-widest text-neutral-400 mb-1.5">Why this score?</p>
+                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{explanation}</p>
+                </div>
+            )}
         </div>
     );
 }
+
 
 // ─────────────────────────────────────────────
 // DocBlock — properly formatted letter
@@ -170,8 +179,9 @@ export function ResultsTabs({ parsedOutput, cvData, templateId }: {
 
             {/* ATS Score */}
             <div className="px-6 pt-6">
-                <AtsScore score={out.ats_score} />
+                <AtsScore score={out.ats_score} explanation={out.ats_score_explanation} />
             </div>
+
 
             {/* Tabs */}
             <div className="flex overflow-x-auto px-4 pt-1 gap-0.5 border-b border-neutral-200 dark:border-neutral-800">

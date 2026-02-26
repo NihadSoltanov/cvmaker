@@ -9,6 +9,9 @@ import { Zap, FileText, RefreshCw } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import { GuideButton } from "@/components/GuideButton";
+import { useIsPaid } from "@/lib/useIsPaid";
+
+const FREE_OPTIMIZE_LIMIT = 3; // per day
 
 export default function OptimizePage() {
     const [jdText, setJdText] = useState("");
@@ -46,15 +49,40 @@ export default function OptimizePage() {
         }
     };
 
+    const { isPaid } = useIsPaid();
+    const [optimizeCount, setOptimizeCount] = useState(0);
 
     useEffect(() => { fetchResume(); }, []);
+
+    // Load daily optimize count
+    useEffect(() => {
+        const today = new Date().toISOString().slice(0, 10);
+        try {
+            const stored = localStorage.getItem("optimize_count");
+            if (stored) {
+                const p = JSON.parse(stored);
+                if (p.date === today) setOptimizeCount(p.count);
+            }
+        } catch { /* ignore */ }
+    }, []);
+
+    const reachedOptimizeLimit = !isPaid && optimizeCount >= FREE_OPTIMIZE_LIMIT;
 
 
     const handleOptimize = async () => {
         if (!resumeData) { alert("Please save a Master CV first in the 'My CV' page."); return; }
         if (!jdText.trim()) { alert("Please paste a job description first."); return; }
+        if (reachedOptimizeLimit) { alert(`Free plan: ${FREE_OPTIMIZE_LIMIT} optimizations/day. Upgrade to Pro for unlimited.`); return; }
         setIsGenerating(true);
         setResults(null);
+
+        // Track usage
+        if (!isPaid) {
+            const today = new Date().toISOString().slice(0, 10);
+            const newCount = optimizeCount + 1;
+            setOptimizeCount(newCount);
+            localStorage.setItem("optimize_count", JSON.stringify({ date: today, count: newCount }));
+        }
 
         try {
             const res = await fetch("/api/ai/optimize", {
@@ -150,16 +178,19 @@ export default function OptimizePage() {
                     <JobPasteBox value={jdText} onChange={setJdText} />
                     <button
                         onClick={handleOptimize}
-                        disabled={isGenerating || !jdText.trim()}
+                        disabled={isGenerating || !jdText.trim() || reachedOptimizeLimit}
                         className="w-full h-14 text-lg rounded-2xl shadow-xl shadow-purple-500/20 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold tracking-wide transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-3"
                     >
-                        {isGenerating ? (
+                        {reachedOptimizeLimit ? (
+                            <>🔒 Daily Limit Reached — Upgrade to Pro</>
+                        ) : isGenerating ? (
                             <>
                                 <RefreshCw className="w-5 h-5 animate-spin" />
                                 Kimi K2 Thinking… (this may take 30–60s)
                             </>
-                        ) : "🚀 Optimize with AI"}
+                        ) : `🚀 Optimize with AI${!isPaid ? ` (${FREE_OPTIMIZE_LIMIT - optimizeCount} left today)` : ""}`}
                     </button>
+
 
                     {/* Master CV info card */}
                     <div className="p-4 bg-white/50 dark:bg-black/30 border border-neutral-200 dark:border-neutral-800 rounded-2xl">
