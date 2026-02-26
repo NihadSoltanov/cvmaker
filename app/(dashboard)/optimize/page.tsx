@@ -18,22 +18,21 @@ export default function OptimizePage() {
     // Which right-pane tab: "documents" (cover letter etc.) vs "cv" (tailored CV preview)
     const [rightTab, setRightTab] = useState<"documents" | "cv">("documents");
 
-    useEffect(() => {
-        const fetchResume = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                const { data } = await supabase
-                    .from("resumes").select("id, resume_json, template_id")
-                    .eq("user_id", user.id).single();
-                if (data) {
-                    setResumeData(data.resume_json);
-                    setResumeId(data.id);
-                    if (data.template_id) setSelectedTemplate(data.template_id);
-                }
+    const fetchResume = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const { data } = await supabase
+                .from("resumes").select("id, resume_json, template_id")
+                .eq("user_id", user.id).single();
+            if (data) {
+                setResumeData(data.resume_json);
+                setResumeId(data.id);
+                if (data.template_id) setSelectedTemplate(data.template_id);
             }
-        };
-        fetchResume();
-    }, []);
+        }
+    };
+
+    useEffect(() => { fetchResume(); }, []);
 
     const handleOptimize = async () => {
         if (!resumeData) { alert("Please save a Master CV first in the 'My CV' page."); return; }
@@ -165,9 +164,16 @@ export default function OptimizePage() {
                                 <span className="ml-auto text-[10px] font-bold bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full">Ready</span>
                             </div>
                         ) : (
-                            <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
-                                ⚠️ No CV saved yet — <a href="/cv" className="underline font-bold">go to My CV</a> first.
-                            </p>
+                            <div className="flex flex-col gap-2">
+                                <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                                    ⚠️ No CV saved yet — <a href="/resume" className="underline font-bold">go to My CV</a> to create one.
+                                </p>
+                                <button
+                                    onClick={fetchResume}
+                                    className="text-xs text-indigo-600 dark:text-indigo-400 underline font-bold text-left hover:opacity-80 transition">
+                                    ↻ I already saved it — reload
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
