@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import { JobPasteBox } from "@/components/JobPasteBox";
 import { ResultsTabs } from "@/components/ResultsTabs";
 import { CvTemplateRenderer, type CvData } from "@/components/CvTemplates";
+import { PdfDownloadButton } from "@/components/PdfGenerator";
 import { Zap, FileText, RefreshCw } from "lucide-react";
+
 import { supabase } from "@/lib/supabase";
 import { GuideButton } from "@/components/GuideButton";
 
@@ -213,10 +215,19 @@ export default function OptimizePage() {
                             ) : (
                                 /* Live tailored CV preview */
                                 <div className="bg-white/60 dark:bg-black/40 backdrop-blur-xl border border-neutral-200 dark:border-neutral-800 rounded-3xl overflow-hidden">
-                                    <div className="px-5 py-3 border-b border-neutral-100 dark:border-neutral-800 flex items-center gap-2">
+                                    <div className="px-5 py-3 border-b border-neutral-100 dark:border-neutral-800 flex items-center gap-2 flex-wrap">
                                         <span className="w-2 h-2 rounded-full bg-green-400" />
                                         <span className="text-xs font-bold uppercase tracking-widest text-neutral-500">AI-Tailored CV</span>
                                         <span className="ml-2 text-[10px] bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full font-bold">Optimized for this JD</span>
+                                        {tailoredCvData && (
+                                            <div className="ml-auto">
+                                                <PdfDownloadButton
+                                                    data={tailoredCvData}
+                                                    templateId={selectedTemplate}
+                                                    fileName={`Tailored_CV_${tailoredCvData?.basicInfo?.fullName?.replace(/\s+/g, "_") || "Resume"}.pdf`}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="p-3 bg-neutral-100 dark:bg-neutral-950 overflow-auto max-h-[700px]">
                                         {tailoredCvData && (
