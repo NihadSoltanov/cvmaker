@@ -11,51 +11,70 @@ export async function optimizeCV(
     const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
     if (!NVIDIA_API_KEY) throw new Error("NVIDIA_API_KEY not configured.");
 
-    const systemPrompt = `You are an elite ATS CV Optimizer and career consultant. Analyze the resume and job description thoroughly, then output ONLY a raw JSON object (no markdown, no code blocks, no explanation) with this exact schema:
+    const systemPrompt = `You are an elite ATS CV Optimizer, career consultant, and professional writer. Your outputs must sound authentically human — warm, specific, and compelling — not robotic or generic.
+
+Analyze the resume and job description deeply, then output ONLY a raw JSON object (no markdown, no code blocks, no explanation, no reasoning text) with this exact schema:
 
 {
   "tailored_resume_json": {
-    "summary": "Rewritten professional summary aligned to the JD",
-    "skills": ["skill1", "skill2"],
-    "experience": [{"company":"","role":"","startDate":"","endDate":"","description":"ATS-optimized bullet points"}],
-    "education": [{"institution":"","degree":"","startDate":"","endDate":""}],
-    "projects": [{"title":"","description":"","link":""}]
+    "basicInfo": {
+      "fullName": "copy from resume",
+      "email": "copy from resume",
+      "phone": "copy from resume",
+      "location": "copy from resume",
+      "linkedin": "copy from resume",
+      "portfolio": "copy from resume"
+    },
+    "summary": "Rewritten 3-sentence professional summary — specific to this JD, uses keywords naturally, sounds human and confident (not buzzword-stuffed)",
+    "skills": ["list", "of", "relevant", "skills", "including", "JD", "keywords"],
+    "experience": [
+      {
+        "company": "exact company name from resume",
+        "role": "exact role from resume",
+        "startDate": "exact date from resume",
+        "endDate": "exact date from resume",
+        "description": "Rewritten bullet points using action verbs + metrics from resume, weaving in JD keywords naturally. Format: • Bullet one\n• Bullet two"
+      }
+    ],
+    "education": [{"institution": "exact", "degree": "exact", "startDate": "exact", "endDate": "exact"}],
+    "projects": [{"title": "exact", "description": "rewritten to highlight JD-relevant skills", "link": "exact"}]
   },
-  "cover_letter": "Full professional cover letter (3-4 paragraphs, formal tone, personalized to the specific company and role)",
-  "motivation_letter": "Motivational letter (personal, story-driven, explains WHY this company and role aligns with career mission)",
-  "application_text": "Short 150-word email body to send with CV attachment — professional and direct",
+  "cover_letter": "3-4 paragraph cover letter. Paragraph 1: Hook — specific opening referencing the company and role. Paragraph 2: Your most relevant experience + a concrete achievement with numbers. Paragraph 3: Why this company specifically (reference something real in the JD). Paragraph 4: Call to action. Must sound like a real human wrote it — warm, confident, specific.",
+  "motivation_letter": "Personal motivation letter (different from cover letter). Story-driven: opens with a personal moment or insight that connects to this industry/role. Explains the WHY behind career choices. Shows genuine enthusiasm for this company's mission. 3-4 paragraphs. Must feel authentically human, not templated.",
+  "application_text": "Short 3-paragraph email body (150 words max). Professional, direct, human. Mentions the role name, one key strength, and a soft CTA.",
   "linkedin_messages": {
-    "recruiter": "Connection request to recruiter (300 chars max)",
-    "hiring_manager": "InMail to Hiring Manager (focused on value proposition)",
-    "referral": "Message to mutual connection asking for referral"
+    "recruiter": "Friendly, personalized connection request to recruiter. Max 300 chars. Reference the specific role and one relevant skill. No generic phrases.",
+    "hiring_manager": "Concise InMail to Hiring Manager. 2-3 sentences. Lead with value, not with asking for a job.",
+    "referral": "Message to mutual connection asking for referral. Warm, specific about the role and company."
   },
-  "ats_score": 85,
-  "ats_keywords_used": ["keyword1", "keyword2"],
-  "missing_requirements": ["Gap 1 — what they need vs what candidate has"],
+  "ats_score": 72,
+  "ats_keywords_used": ["keyword1 actually from the JD", "keyword2", "..."],
+  "missing_requirements": ["Specific gap: JD requires X, candidate has Y but not Z — be precise."],
   "suggestions": {
-    "projects": ["Side project idea that would strengthen candidacy"],
-    "courses": ["Specific course to take with platform name"],
-    "skills_to_learn": ["Specific skill gap to fill"],
-    "career_tip": "One concrete strategic career tip based on this specific application"
+    "projects": ["Concrete project idea that would directly address a gap or show a required skill"],
+    "courses": ["Specific real course title + platform, e.g. 'AWS Solutions Architect on A Cloud Guru'"],
+    "skills_to_learn": ["Specific tool or skill mentioned in JD that candidate lacks"],
+    "career_tip": "One highly specific, actionable career tip tailored to this candidate and this application"
   }
 }
 
-Rules:
+Critical rules:
 - Output language: ${language}
-- Tone: ${tone}
-- NEVER fabricate employment dates, company names, or certifications
-- DO tailor summaries, bullet points, and keywords to the JD
-- ATS score must be realistic and honest (0-100)
-- Cover letter MUST address the company by name and reference the specific role
-- Raw JSON ONLY — no markdown fences, no extra text`;
+- Tone: ${tone}  
+- NEVER invent company names, dates, achievements or certifications not in the resume
+- DO rewrite bullet points to use JD keywords naturally (without stuffing)
+- ATS score: calculate honestly based on keyword match, experience relevance, and skills alignment
+- All letter content must feel written by a real human — avoid clichés like "I am writing to express my interest"
+- Raw JSON ONLY — absolutely no text before or after the JSON object`;
 
     const messages = [
         { role: "system" as const, content: systemPrompt },
         {
             role: "user" as const,
-            content: `Resume Data:\n${resumeText}\n\n---\nJob Description:\n${jdText}\n\nAnalyze deeply and generate all outputs in the specified JSON format.`
+            content: `Here is the candidate's resume:\n${resumeText}\n\n---\n\nHere is the target job description:\n${jdText}\n\nPlease analyze both thoroughly and generate all outputs. Remember: output ONLY the JSON object, nothing else.`
         }
     ];
+
 
     // Non-streaming call to kimi-k2-thinking
     const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
