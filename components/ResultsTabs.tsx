@@ -143,8 +143,8 @@ export function ResultsTabs({ parsedOutput, cvData, templateId }: {
         { id: "email", label: "Email", icon: Mail },
         { id: "linkedin", label: "LinkedIn", icon: Linkedin },
         { id: "gaps", label: "Gaps & Tips", icon: AlertTriangle },
-        { id: "jobs", label: "Find Jobs", icon: Briefcase },
     ];
+
 
     const contentMap: Record<string, string> = {
         cover: out.cover_letter || "",
@@ -255,22 +255,46 @@ export function ResultsTabs({ parsedOutput, cvData, templateId }: {
                             </div>
                         )}
 
-                        {/* Missing requirements */}
+                        {/* Missing requirements with improvement links */}
                         {out.missing_requirements?.length > 0 && (
                             <div>
                                 <p className="text-sm font-black uppercase tracking-widest text-red-500 mb-3 flex items-center gap-2">
                                     <span className="text-base">⚠️</span> Gaps — What the JD requires that you may lack
                                 </p>
-                                <div className="space-y-2">
-                                    {out.missing_requirements.map((r: string, i: number) => (
-                                        <div key={i} className="flex items-start gap-3 p-3.5 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/30">
-                                            <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-                                            <p className="text-sm text-neutral-800 dark:text-neutral-200 leading-relaxed">{r}</p>
-                                        </div>
-                                    ))}
+                                <div className="space-y-3">
+                                    {out.missing_requirements.map((r: string, i: number) => {
+                                        const searchQ = encodeURIComponent(r.replace(/^JD requires\s*/i, "").slice(0, 80));
+                                        return (
+                                            <div key={i} className="p-4 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/30">
+                                                <div className="flex items-start gap-3">
+                                                    <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                                                    <p className="text-sm text-neutral-800 dark:text-neutral-200 leading-relaxed">{r}</p>
+                                                </div>
+                                                <div className="flex gap-2 mt-3 ml-7 flex-wrap">
+                                                    <a href={`https://www.udemy.com/courses/search/?q=${searchQ}`} target="_blank" rel="noopener noreferrer"
+                                                        className="text-xs font-bold px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/50 transition flex items-center gap-1">
+                                                        🎓 Udemy
+                                                    </a>
+                                                    <a href={`https://www.youtube.com/results?search_query=${searchQ}+tutorial`} target="_blank" rel="noopener noreferrer"
+                                                        className="text-xs font-bold px-3 py-1.5 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-full hover:bg-red-200 dark:hover:bg-red-900/40 transition flex items-center gap-1">
+                                                        ▶ YouTube
+                                                    </a>
+                                                    <a href={`https://www.coursera.org/search?query=${searchQ}`} target="_blank" rel="noopener noreferrer"
+                                                        className="text-xs font-bold px-3 py-1.5 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/40 transition flex items-center gap-1">
+                                                        📘 Coursera
+                                                    </a>
+                                                    <a href={`https://www.google.com/search?q=how+to+learn+${searchQ}`} target="_blank" rel="noopener noreferrer"
+                                                        className="text-xs font-bold px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-700 transition flex items-center gap-1">
+                                                        🔍 Google
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
+
 
                         {/* Suggestions grid */}
                         {out.suggestions && (

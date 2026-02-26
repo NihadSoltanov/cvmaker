@@ -6,23 +6,23 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 const T = {
     en: {
         overview: "Overview", myCV: "My CV", optimize: "Optimize",
-        coach: "AI Career Coach", history: "History", settings: "Settings",
-        logout: "Log out", loading: "Loading Workspace…"
+        coach: "AI Career Coach", jobs: "Find Jobs", history: "History",
+        settings: "Settings", logout: "Log out", loading: "Loading Workspace…"
     },
     tr: {
         overview: "Panel", myCV: "CV'm", optimize: "Optimize Et",
-        coach: "AI Kariyer Koçu", history: "Geçmiş", settings: "Ayarlar",
-        logout: "Çıkış yap", loading: "Yükleniyor…"
+        coach: "AI Kariyer Koçu", jobs: "İş Bul", history: "Geçmiş",
+        settings: "Ayarlar", logout: "Çıkış yap", loading: "Yükleniyor…"
     },
     az: {
         overview: "İdarə paneli", myCV: "CV'm", optimize: "Optimallaşdır",
-        coach: "AI Karyera Məşqçisi", history: "Tarixçə", settings: "Parametrlər",
-        logout: "Çıxış", loading: "Yüklənir…"
+        coach: "AI Karyera Məşqçisi", jobs: "İş Tap", history: "Tarixçə",
+        settings: "Parametrlər", logout: "Çıxış", loading: "Yüklənir…"
     },
     ru: {
         overview: "Обзор", myCV: "Моё резюме", optimize: "Оптимизировать",
-        coach: "ИИ Карьерный коуч", history: "История", settings: "Настройки",
-        logout: "Выйти", loading: "Загрузка…"
+        coach: "ИИ Карьерный коуч", jobs: "Поиск вакансий", history: "История",
+        settings: "Настройки", logout: "Выйти", loading: "Загрузка…"
     }
 } as const;
 

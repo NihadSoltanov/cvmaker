@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { BrainCircuit, Send, RefreshCw, Sparkles, User } from "lucide-react";
+import { BrainCircuit, Send, RefreshCw, Sparkles, User, Lock } from "lucide-react";
 import { GuideButton } from "@/components/GuideButton";
+import { useIsPaid } from "@/lib/useIsPaid";
 
 type Message = { role: "user" | "assistant"; content: string };
+
+const FREE_MSG_LIMIT = 5; // messages per day
 
 const QUICK_PROMPTS = [
     "How do I negotiate a higher salary offer?",
@@ -23,16 +26,43 @@ export default function CareerCoachPage() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [msgCount, setMsgCount] = useState(0);
     const bottomRef = useRef<HTMLDivElement>(null);
+    const { isPaid } = useIsPaid();
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+    // Load daily message count
+    useEffect(() => {
+        const today = new Date().toISOString().slice(0, 10);
+        try {
+            const stored = localStorage.getItem("coach_msg_count");
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (parsed.date === today) setMsgCount(parsed.count);
+            }
+        } catch { /* ignore */ }
+    }, []);
+
+    const reachedLimit = !isPaid && msgCount >= FREE_MSG_LIMIT;
+    const remaining = isPaid ? Infinity : FREE_MSG_LIMIT - msgCount;
+
     const sendMessage = async (text?: string) => {
         const userMsg = text ?? input.trim();
-        if (!userMsg || isLoading) return;
+        if (!userMsg || isLoading || reachedLimit) return;
+
         setInput("");
+
+        // Track usage for free users
+        if (!isPaid) {
+            const today = new Date().toISOString().slice(0, 10);
+            const newCount = msgCount + 1;
+            setMsgCount(newCount);
+            localStorage.setItem("coach_msg_count", JSON.stringify({ date: today, count: newCount }));
+        }
+
         const newMessages: Message[] = [...messages, { role: "user", content: userMsg }];
         setMessages(newMessages);
         setIsLoading(true);
@@ -65,6 +95,11 @@ export default function CareerCoachPage() {
                         <h1 className="text-3xl font-black tracking-tight text-neutral-900 dark:text-white flex items-center gap-2">
                             AI Career Coach
                             <span className="text-xs font-bold bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-2 py-0.5 rounded-full">KIMI K2</span>
+                            {!isPaid && (
+                                <span className="text-xs font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full">
+                                    Free: {remaining > 0 ? `${remaining} left today` : "Limit reached"}
+                                </span>
+                            )}
                         </h1>
                         <p className="text-neutral-500 dark:text-neutral-400 font-medium text-sm">Get expert career advice — salary negotiation, job hunting, interviews, career pivots and more.</p>
                     </div>
@@ -80,6 +115,7 @@ export default function CareerCoachPage() {
                     tips: [
                         "Be specific: include your industry, experience level, and country for better advice.",
                         "Ask follow-up questions — the more context you give, the better the advice.",
+                        `Free plan: ${FREE_MSG_LIMIT} messages/day. Pro: unlimited.`,
                     ]
                 }} />
             </div>
@@ -98,8 +134,8 @@ export default function CareerCoachPage() {
                             <p className="text-sm text-neutral-500 max-w-sm">Ask anything about your career — from salary negotiation scripts to handling a toxic boss. Powered by Kimi K2 reasoning AI.</p>
                             <div className="mt-6 flex flex-wrap justify-center gap-2 max-w-2xl">
                                 {QUICK_PROMPTS.slice(0, 6).map((q, i) => (
-                                    <button key={i} onClick={() => sendMessage(q)}
-                                        className="text-xs font-semibold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 px-3 py-2 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-300 transition border border-neutral-200 dark:border-neutral-700 text-left">
+                                    <button key={i} onClick={() => sendMessage(q)} disabled={reachedLimit}
+                                        className="text-xs font-semibold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 px-3 py-2 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-300 transition border border-neutral-200 dark:border-neutral-700 text-left disabled:opacity-40 disabled:cursor-not-allowed">
                                         {q}
                                     </button>
                                 ))}
@@ -143,8 +179,19 @@ export default function CareerCoachPage() {
                     <div ref={bottomRef} />
                 </div>
 
+                {/* Limit reached banner */}
+                {reachedLimit && (
+                    <div className="px-4 py-3 bg-amber-50 dark:bg-amber-900/10 border-t border-amber-200 dark:border-amber-800 flex items-center gap-3 text-sm">
+                        <Lock className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                        <p className="text-amber-800 dark:text-amber-300">
+                            <strong>Daily message limit reached.</strong> Free plan allows {FREE_MSG_LIMIT} messages per day.
+                            <a href="/settings" className="ml-2 underline font-bold text-indigo-600 dark:text-indigo-400">Upgrade to Pro →</a>
+                        </p>
+                    </div>
+                )}
+
                 {/* Quick prompts row (when conversation active) */}
-                {messages.length > 0 && (
+                {messages.length > 0 && !reachedLimit && (
                     <div className="px-4 py-2 border-t border-neutral-100 dark:border-neutral-800 flex gap-2 overflow-x-auto no-scrollbar">
                         {QUICK_PROMPTS.slice(0, 5).map((q, i) => (
                             <button key={i} onClick={() => sendMessage(q)}
@@ -167,10 +214,11 @@ export default function CareerCoachPage() {
                         onChange={e => setInput(e.target.value)}
                         onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                         rows={2}
-                        placeholder="Ask anything about your career… (Enter to send, Shift+Enter for new line)"
-                        className="flex-1 resize-none bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl px-4 py-3 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-indigo-400 transition"
+                        disabled={reachedLimit}
+                        placeholder={reachedLimit ? "Daily limit reached — upgrade to Pro for unlimited" : "Ask anything about your career… (Enter to send, Shift+Enter for new line)"}
+                        className="flex-1 resize-none bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl px-4 py-3 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-indigo-400 transition disabled:opacity-50"
                     />
-                    <button onClick={() => sendMessage()} disabled={!input.trim() || isLoading}
+                    <button onClick={() => sendMessage()} disabled={!input.trim() || isLoading || reachedLimit}
                         className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white flex items-center justify-center hover:opacity-90 transition disabled:opacity-40">
                         <Send className="w-4 h-4" />
                     </button>

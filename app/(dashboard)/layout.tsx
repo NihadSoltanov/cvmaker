@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, FileText, Zap, Clock, Settings, LogOut, BrainCircuit } from "lucide-react";
+import { LayoutDashboard, FileText, Zap, Clock, Settings, LogOut, BrainCircuit, Search } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { LangProvider, useLang } from "@/lib/langContext";
 import { supabase } from "@/lib/supabase";
@@ -44,9 +44,11 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
         { href: "/resume", labelKey: "myCV" as const, icon: FileText },
         { href: "/optimize", labelKey: "optimize" as const, icon: Zap },
         { href: "/coach", labelKey: "coach" as const, icon: BrainCircuit },
+        { href: "/jobs", labelKey: "jobs" as const, icon: Search },
         { href: "/history", labelKey: "history" as const, icon: Clock },
         { href: "/settings", labelKey: "settings" as const, icon: Settings },
     ];
+
 
     return (
         <div className="min-h-screen bg-neutral-100/30 dark:bg-black font-sans flex text-neutral-900 dark:text-neutral-50 relative overflow-hidden selection:bg-indigo-500/30">
