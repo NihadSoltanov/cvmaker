@@ -1,70 +1,49 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Globe } from "lucide-react";
+import { useState } from "react";
+import { useLang } from "@/lib/langContext";
 import { motion, AnimatePresence } from "framer-motion";
 
-const languages = [
-    { code: 'en', label: 'English' },
-    { code: 'tr', label: 'Türkçe' },
-    { code: 'az', label: 'Azərbaycanca' },
-    { code: 'ru', label: 'Русский' }
+const LANGS = [
+    { code: "en" as const, label: "English", flag: "🇬🇧" },
+    { code: "tr" as const, label: "Türkçe", flag: "🇹🇷" },
+    { code: "az" as const, label: "Azərbaycanca", flag: "🇦🇿" },
+    { code: "ru" as const, label: "Русский", flag: "🇷🇺" },
 ];
 
 export function LanguageSwitcher() {
     const [isOpen, setIsOpen] = useState(false);
-    const [current, setCurrent] = useState('en');
-
-    useEffect(() => {
-        if (typeof document !== 'undefined') {
-            const match = document.cookie.match(new RegExp('(^| )NEXT_LOCALE=([^;]+)'));
-            if (match) setCurrent(match[2]);
-        }
-    }, []);
-
-    const handleSelect = (code: string) => {
-        setCurrent(code);
-        setIsOpen(false);
-        if (typeof document !== 'undefined') {
-            document.cookie = `NEXT_LOCALE=${code}; path=/; max-age=31536000`;
-            window.location.reload();
-        }
-    };
+    const { lang, setLang } = useLang();
+    const current = LANGS.find(l => l.code === lang) ?? LANGS[0];
 
     return (
-        <div className="relative inline-block text-left z-50">
+        <div className="relative inline-block text-left z-50 w-full">
             <button
                 type="button"
-                className="inline-flex items-center gap-2 justify-center w-full rounded-full border border-neutral-200 dark:border-neutral-800 shadow-sm px-4 py-2 bg-white/50 dark:bg-black/50 backdrop-blur-md text-sm font-medium text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition focus:outline-none"
                 onClick={() => setIsOpen(!isOpen)}
+                className="inline-flex items-center gap-2 justify-start w-full rounded-2xl border border-neutral-200 dark:border-neutral-800 px-4 py-3 bg-white/50 dark:bg-black/50 text-sm font-bold text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition"
             >
-                <Globe className="w-4 h-4 text-indigo-500" />
-                {languages.find(l => l.code === current)?.label}
+                <Globe className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+                <span>{current.flag} {current.label}</span>
             </button>
 
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                        className="origin-top-right absolute right-0 mt-2 w-40 rounded-xl shadow-lg bg-white dark:bg-neutral-900 ring-1 ring-black ring-opacity-5 dark:ring-white dark:ring-opacity-10 focus:outline-none overflow-hidden"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute bottom-full mb-2 left-0 right-0 rounded-2xl shadow-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 overflow-hidden"
                     >
-                        <div className="py-1">
-                            {languages.map((lang) => (
-                                <button
-                                    key={lang.code}
-                                    onClick={() => handleSelect(lang.code)}
-                                    className={`block px-4 py-2 text-sm w-full text-left transition-colors ${current === lang.code
-                                        ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold'
-                                        : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
-                                        }`}
-                                >
-                                    {lang.label}
-                                </button>
-                            ))}
-                        </div>
+                        {LANGS.map(l => (
+                            <button key={l.code}
+                                onClick={() => { setLang(l.code); setIsOpen(false); }}
+                                className={`flex items-center gap-3 w-full px-4 py-2.5 text-sm font-semibold transition-colors ${lang === l.code ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400" : "text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"}`}>
+                                <span className="text-base">{l.flag}</span> {l.label}
+                            </button>
+                        ))}
                     </motion.div>
                 )}
             </AnimatePresence>

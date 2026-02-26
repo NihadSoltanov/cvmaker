@@ -530,13 +530,52 @@ function EuroSec({ title, accent, children }: { title: string; accent: string; c
 // ─────────────────────────────────────────────────
 // RENDERER DISPATCHER
 // ─────────────────────────────────────────────────
-export function CvTemplateRenderer({ templateId, data }: { templateId: string; data: CvData }) {
+export function CvTemplateRenderer({
+    templateId, data, isPaidUser = true
+}: {
+    templateId: string;
+    data: CvData;
+    isPaidUser?: boolean;
+}) {
+    let template: React.ReactNode;
     switch (templateId) {
-        case "modern": return <TemplateModern d={data} />;
-        case "executive": return <TemplateExecutive d={data} />;
-        case "creative": return <TemplateCreative d={data} />;
-        case "minimal": return <TemplateMinimal d={data} />;
-        case "euro": return <TemplateEuro d={data} />;
-        default: return <TemplateClassic d={data} />;
+        case "modern": template = <TemplateModern d={data} />; break;
+        case "executive": template = <TemplateExecutive d={data} />; break;
+        case "creative": template = <TemplateCreative d={data} />; break;
+        case "minimal": template = <TemplateMinimal d={data} />; break;
+        case "euro": template = <TemplateEuro d={data} />; break;
+        default: template = <TemplateClassic d={data} />;
     }
+
+    return (
+        <div style={{ position: "relative" }}>
+            {template}
+            {!isPaidUser && (
+                <div style={{
+                    position: "absolute", inset: 0, pointerEvents: "none",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    overflow: "hidden",
+                }}>
+                    {/* Repeating diagonal watermark */}
+                    {Array.from({ length: 9 }).map((_, i) => (
+                        <div key={i} style={{
+                            position: "absolute",
+                            top: `${(i % 3) * 33 + 10}%`,
+                            left: `${Math.floor(i / 3) * 33 + 5}%`,
+                            transform: "rotate(-35deg)",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: "rgba(99,102,241,0.18)",
+                            letterSpacing: 1,
+                            whiteSpace: "nowrap",
+                            fontFamily: "sans-serif",
+                            userSelect: "none",
+                        }}>
+                            AI CV Optimizer — Free Plan
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
 }

@@ -71,6 +71,7 @@ export default function OptimizePage() {
                 }]);
             }
 
+
             setResults(data);
             setRightTab("documents");
         } catch (error: any) {
