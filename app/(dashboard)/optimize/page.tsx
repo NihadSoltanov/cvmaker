@@ -19,20 +19,32 @@ export default function OptimizePage() {
     const [rightTab, setRightTab] = useState<"documents" | "cv">("documents");
 
     const fetchResume = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            const { data } = await supabase
-                .from("resumes").select("id, resume_json, template_id")
-                .eq("user_id", user.id).single();
-            if (data) {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) { console.warn("fetchResume: no user"); return; }
+
+            const { data, error } = await supabase
+                .from("resumes")
+                .select("id, resume_json, template_id")
+                .eq("user_id", user.id)
+                .maybeSingle();   // safe — returns null instead of throwing on 0 rows
+
+            if (error) { console.error("fetchResume error:", error); return; }
+            if (data?.resume_json) {
                 setResumeData(data.resume_json);
                 setResumeId(data.id);
                 if (data.template_id) setSelectedTemplate(data.template_id);
+            } else {
+                console.log("fetchResume: no resume row found for user");
+                setResumeData(null);   // explicitly clear so UI updates
             }
+        } catch (e) {
+            console.error("fetchResume threw:", e);
         }
     };
 
     useEffect(() => { fetchResume(); }, []);
+
 
     const handleOptimize = async () => {
         if (!resumeData) { alert("Please save a Master CV first in the 'My CV' page."); return; }
