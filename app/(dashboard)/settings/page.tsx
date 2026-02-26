@@ -22,11 +22,11 @@ export default function SettingsPage() {
             if (user) {
                 setEmail(user.email || "");
                 // Fetch profile
-                const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
+                const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
                 if (profile) setFullName(profile.full_name || "");
 
                 // Fetch subscription
-                const { data: sub } = await supabase.from("subscriptions").select("plan, status").eq("user_id", user.id).single();
+                const { data: sub } = await supabase.from("subscriptions").select("plan, status").eq("user_id", user.id).maybeSingle();
                 if (sub) {
                     setPlan(sub.plan);
                     setStatus(sub.status);

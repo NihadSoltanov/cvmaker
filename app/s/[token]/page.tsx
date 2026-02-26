@@ -91,7 +91,7 @@ export default function SharePage() {
                 <h1 className="text-2xl font-bold text-neutral-900 mb-2">Link Expired</h1>
                 <p className="text-neutral-500 mb-6">This share link has expired. Ask the owner to generate a new one.</p>
                 <a href="/" className="inline-flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition">
-                    Go to AI CV Optimizer →
+                    Go to CViq →
                 </a>
             </div>
         </div>
@@ -149,7 +149,7 @@ export default function SharePage() {
             </div>
 
             <div className="text-center mt-8">
-                <p className="text-sm text-neutral-500 mb-3">Powered by <strong className="text-neutral-700">AI CV Optimizer</strong></p>
+                <p className="text-sm text-neutral-500 mb-3">Powered by <strong className="text-neutral-700">CViq</strong></p>
                 <a href="/" className="inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-500/20">
                     Create Your Own CV →
                 </a>

@@ -159,7 +159,7 @@ export function ResumeEditor({ resume, onSave, isSaving }: {
                         <Link2 className="w-3.5 h-3.5" />
                         {isSharing ? "Creating…" : shareUrl ? "✓ Copied!" : "Share Link"}
                     </button>
-                    <PdfDownloadButton data={resumeData} templateId={selectedTemplate} />
+                    <PdfDownloadButton data={resumeData} templateId={selectedTemplate} watermark={!isPaidUser} />
                     <button onClick={handleSave} disabled={isSaving}
                         className="flex items-center gap-2 bg-indigo-600 text-white rounded-xl px-3 py-2 font-bold hover:bg-indigo-700 transition disabled:opacity-50 text-xs">
                         <Save className="w-3.5 h-3.5" />
@@ -357,7 +357,7 @@ export function ResumeEditor({ resume, onSave, isSaving }: {
                     {/* Preview footer with download */}
                     <div className="px-4 py-3 border-t border-neutral-300 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 flex items-center justify-between gap-3">
                         <p className="text-[10px] text-neutral-400 font-medium">Updates in real‑time as you edit</p>
-                        <PdfDownloadButton data={resumeData} templateId={selectedTemplate} />
+                        <PdfDownloadButton data={resumeData} templateId={selectedTemplate} watermark={!isPaidUser} />
                     </div>
                 </div>
             </div>

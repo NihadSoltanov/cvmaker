@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, FileText, Zap, Clock, Star } from "lucide-react";
+import { ArrowRight, FileText, Zap, Clock, Star, ScanSearch } from "lucide-react";
 import { BackgroundBeams } from "@/components/ui/background-beams";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -14,10 +14,10 @@ export default function DashboardOverview() {
         const fetchDashboardData = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
+                const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
                 if (profile) setFullName(profile.full_name || "User");
 
-                const { data: sub } = await supabase.from("subscriptions").select("plan").eq("user_id", user.id).single();
+                const { data: sub } = await supabase.from("subscriptions").select("plan").eq("user_id", user.id).maybeSingle();
                 if (sub) setPlan(sub.plan || "free");
             }
         };
@@ -35,12 +35,12 @@ export default function DashboardOverview() {
                 <p className="text-lg font-medium text-neutral-500 dark:text-neutral-400 max-w-2xl">Your personalized command center. Edit your base resume, generate tailored applications for specific roles, and track your history here.</p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6 lg:gap-8 perspective-1000 relative">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 perspective-1000 relative">
                 <Link href="/resume" className="group rounded-[2rem] p-8 flex flex-col transition-all duration-300 bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-neutral-200 dark:border-neutral-800 shadow-xl shadow-black/5 hover:border-indigo-500 hover:shadow-indigo-500/10 cursor-pointer block h-full">
                     <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 rounded-2xl flex items-center justify-center mb-6 shadow-inner group-hover:scale-110 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-300">
                         <FileText className="w-8 h-8" />
                     </div>
-                    <h3 className="text-2xl font-bold mb-3 text-neutral-900 dark:text-white tracking-tight">Main CV Profile</h3>
+                    <h3 className="text-xl font-bold mb-3 text-neutral-900 dark:text-white tracking-tight">Main CV Profile</h3>
                     <p className="text-neutral-500 dark:text-neutral-400 font-medium text-sm mb-6 flex-1">Keep your master experience, skills, and summary up to date for better AI tailoring.</p>
                     <div className="text-indigo-600 dark:text-indigo-400 text-sm font-bold flex items-center pt-6 border-t border-neutral-200 dark:border-neutral-800/80">
                         Edit CV Data <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -51,10 +51,21 @@ export default function DashboardOverview() {
                     <div className="w-16 h-16 bg-purple-50 dark:bg-purple-900/30 text-purple-500 rounded-2xl flex items-center justify-center mb-6 shadow-inner group-hover:scale-110 group-hover:bg-purple-500 group-hover:text-white transition-all duration-300">
                         <Zap className="w-8 h-8" />
                     </div>
-                    <h3 className="text-2xl font-bold mb-3 text-neutral-900 dark:text-white tracking-tight">Quick Optimize</h3>
+                    <h3 className="text-xl font-bold mb-3 text-neutral-900 dark:text-white tracking-tight">Quick Optimize</h3>
                     <p className="text-neutral-500 dark:text-neutral-400 font-medium text-sm mb-6 flex-1">Paste a job description to instantly align your CV, write emails, and prepare LinkedIn drafts.</p>
                     <div className="text-purple-600 dark:text-purple-400 text-sm font-bold flex items-center pt-6 border-t border-neutral-200 dark:border-neutral-800/80">
                         Start Generation <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                </Link>
+
+                <Link href="/ats-check" className="group rounded-[2rem] p-8 flex flex-col transition-all duration-300 bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-neutral-200 dark:border-neutral-800 shadow-xl shadow-black/5 hover:border-violet-500 hover:shadow-violet-500/10 cursor-pointer block h-full">
+                    <div className="w-16 h-16 bg-violet-50 dark:bg-violet-900/30 text-violet-500 rounded-2xl flex items-center justify-center mb-6 shadow-inner group-hover:scale-110 group-hover:bg-violet-500 group-hover:text-white transition-all duration-300">
+                        <ScanSearch className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-xl font-bold mb-3 text-neutral-900 dark:text-white tracking-tight">ATS Scanner</h3>
+                    <p className="text-neutral-500 dark:text-neutral-400 font-medium text-sm mb-6 flex-1">Upload any CV and get an instant ATS compatibility score with keyword gaps and quick fixes.</p>
+                    <div className="text-violet-600 dark:text-violet-400 text-sm font-bold flex items-center pt-6 border-t border-neutral-200 dark:border-neutral-800/80">
+                        Scan a CV <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                     </div>
                 </Link>
 
@@ -62,7 +73,7 @@ export default function DashboardOverview() {
                     <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 text-blue-500 rounded-2xl flex items-center justify-center mb-6 shadow-inner group-hover:scale-110 group-hover:bg-blue-500 group-hover:text-white transition-all duration-300">
                         <Clock className="w-8 h-8" />
                     </div>
-                    <h3 className="text-2xl font-bold mb-3 text-neutral-900 dark:text-white tracking-tight">App History</h3>
+                    <h3 className="text-xl font-bold mb-3 text-neutral-900 dark:text-white tracking-tight">App History</h3>
                     <p className="text-neutral-500 dark:text-neutral-400 font-medium text-sm mb-6 flex-1">Access past tailored resumes, download PDFs, or manage share links.</p>
                     <div className="text-blue-600 dark:text-blue-400 text-sm font-bold flex items-center pt-6 border-t border-neutral-200 dark:border-neutral-800/80">
                         View Generations <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />

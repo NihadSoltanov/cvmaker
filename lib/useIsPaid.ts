@@ -3,7 +3,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
-/** Hook to check if the current user has an active paid subscription */
+/**
+ * Hook to check if the current user has an active paid subscription.
+ * Reads from profiles.is_paid (set by admin or Stripe webhook).
+ */
 export function useIsPaid() {
     const [isPaid, setIsPaid] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -18,7 +21,7 @@ export function useIsPaid() {
                     .from("profiles")
                     .select("is_paid")
                     .eq("id", user.id)
-                    .maybeSingle();
+                    .single();
 
                 setIsPaid(profile?.is_paid === true);
             } catch {

@@ -7,22 +7,26 @@ const T = {
     en: {
         overview: "Overview", myCV: "My CV", optimize: "Optimize",
         coach: "AI Career Coach", jobs: "Find Jobs", history: "History",
-        settings: "Settings", logout: "Log out", loading: "Loading Workspace…"
+        settings: "Settings", logout: "Log out", loading: "Loading Workspace…",
+        atsCheck: "ATS Scanner"
     },
     tr: {
         overview: "Panel", myCV: "CV'm", optimize: "Optimize Et",
         coach: "AI Kariyer Koçu", jobs: "İş Bul", history: "Geçmiş",
-        settings: "Ayarlar", logout: "Çıkış yap", loading: "Yükleniyor…"
+        settings: "Ayarlar", logout: "Çıkış yap", loading: "Yükleniyor…",
+        atsCheck: "ATS Tarayıcı"
     },
     az: {
         overview: "İdarə paneli", myCV: "CV'm", optimize: "Optimallaşdır",
         coach: "AI Karyera Məşqçisi", jobs: "İş Tap", history: "Tarixçə",
-        settings: "Parametrlər", logout: "Çıxış", loading: "Yüklənir…"
+        settings: "Parametrlər", logout: "Çıxış", loading: "Yüklənir…",
+        atsCheck: "ATS Skaneri"
     },
     ru: {
         overview: "Обзор", myCV: "Моё резюме", optimize: "Оптимизировать",
         coach: "ИИ Карьерный коуч", jobs: "Поиск вакансий", history: "История",
-        settings: "Настройки", logout: "Выйти", loading: "Загрузка…"
+        settings: "Настройки", logout: "Выйти", loading: "Загрузка…",
+        atsCheck: "ATS Сканер"
     }
 } as const;
 

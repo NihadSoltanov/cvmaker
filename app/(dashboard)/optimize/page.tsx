@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { JobPasteBox } from "@/components/JobPasteBox";
 import { ResultsTabs } from "@/components/ResultsTabs";
 import { CvTemplateRenderer, type CvData } from "@/components/CvTemplates";
 import { PdfDownloadButton } from "@/components/PdfGenerator";
-import { Zap, FileText, RefreshCw } from "lucide-react";
+import { Zap, FileText, RefreshCw, Upload, X } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import { GuideButton } from "@/components/GuideButton";
@@ -20,8 +20,13 @@ export default function OptimizePage() {
     const [resumeData, setResumeData] = useState<any>(null);
     const [resumeId, setResumeId] = useState<string | null>(null);
     const [selectedTemplate, setSelectedTemplate] = useState("classic");
-    // Which right-pane tab: "documents" (cover letter etc.) vs "cv" (tailored CV preview)
     const [rightTab, setRightTab] = useState<"documents" | "cv">("documents");
+
+    // PDF upload state
+    const [cvSource, setCvSource] = useState<"saved" | "upload">("saved");
+    const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const fetchResume = async () => {
         try {
@@ -70,7 +75,8 @@ export default function OptimizePage() {
 
 
     const handleOptimize = async () => {
-        if (!resumeData) { alert("Please save a Master CV first in the 'My CV' page."); return; }
+        if (cvSource === "saved" && !resumeData) { alert("Please save a Master CV first in the 'My CV' page."); return; }
+        if (cvSource === "upload" && !uploadedFile) { alert("Please upload a PDF CV file first."); return; }
         if (!jdText.trim()) { alert("Please paste a job description first."); return; }
         if (reachedOptimizeLimit) { alert(`Free plan: ${FREE_OPTIMIZE_LIMIT} optimizations/day. Upgrade to Pro for unlimited.`); return; }
         setIsGenerating(true);
@@ -85,11 +91,21 @@ export default function OptimizePage() {
         }
 
         try {
-            const res = await fetch("/api/ai/optimize", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ resumeJson: resumeData, jdText, language: "en", tone: "professional" }),
-            });
+            let res: Response;
+            if (cvSource === "upload" && uploadedFile) {
+                const formData = new FormData();
+                formData.append("file", uploadedFile);
+                formData.append("jdText", jdText);
+                formData.append("language", "en");
+                formData.append("tone", "professional");
+                res = await fetch("/api/ai/optimize", { method: "POST", body: formData });
+            } else {
+                res = await fetch("/api/ai/optimize", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ resumeJson: resumeData, jdText, language: "en", tone: "professional" }),
+                });
+            }
 
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Generation failed");
@@ -173,12 +189,113 @@ export default function OptimizePage() {
             {/* Main grid: JD input left | results right */}
             <div className="grid lg:grid-cols-[1fr_1.2fr] gap-6 items-start">
 
-                {/* LEFT: JD paste + optimize button */}
+                {/* LEFT: CV source + JD paste + optimize button */}
                 <div className="space-y-4">
+
+                    {/* CV source toggle + card */}
+                    <div className="p-4 bg-white/50 dark:bg-black/30 border border-neutral-200 dark:border-neutral-800 rounded-2xl space-y-3">
+                        <p className="text-xs font-bold uppercase tracking-wider text-neutral-400">CV Source</p>
+
+                        {/* Toggle */}
+                        <div className="flex bg-neutral-100 dark:bg-neutral-900 rounded-xl p-1 gap-1">
+                            <button
+                                onClick={() => setCvSource("saved")}
+                                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${cvSource === "saved" ? "bg-white dark:bg-neutral-800 shadow text-neutral-900 dark:text-white" : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"}`}
+                            >
+                                📋 My Saved CV
+                            </button>
+                            <button
+                                onClick={() => setCvSource("upload")}
+                                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${cvSource === "upload" ? "bg-white dark:bg-neutral-800 shadow text-neutral-900 dark:text-white" : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"}`}
+                            >
+                                📄 Upload PDF
+                            </button>
+                        </div>
+
+                        {/* Saved CV info */}
+                        {cvSource === "saved" && (
+                            resumeData ? (
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 flex items-center justify-center">
+                                        <FileText className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
+                                            {resumeData.name || resumeData.basicInfo?.fullName || "Your CV"}
+                                        </p>
+                                        <p className="text-xs text-neutral-500">
+                                            {Array.isArray(resumeData.experience) ? resumeData.experience.length : 0} jobs · {Array.isArray(resumeData.education) ? resumeData.education.length : 0} education entries
+                                        </p>
+                                    </div>
+                                    <span className="ml-auto text-[10px] font-bold bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full">Ready</span>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-2">
+                                    <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                                        ⚠️ No CV saved yet — <a href="/resume" className="underline font-bold">go to My CV</a> to create one.
+                                    </p>
+                                    <button onClick={fetchResume} className="text-xs text-indigo-600 dark:text-indigo-400 underline font-bold text-left hover:opacity-80 transition">
+                                        ↻ I already saved it — reload
+                                    </button>
+                                </div>
+                            )
+                        )}
+
+                        {/* PDF upload drop zone */}
+                        {cvSource === "upload" && (
+                            <div>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept=".pdf"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const f = e.target.files?.[0];
+                                        if (f && f.type === "application/pdf") setUploadedFile(f);
+                                    }}
+                                />
+                                {uploadedFile ? (
+                                    <div className="flex items-center gap-3 p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700/40 rounded-xl">
+                                        <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 flex items-center justify-center shrink-0">
+                                            <FileText className="w-4 h-4" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 truncate">{uploadedFile.name}</p>
+                                            <p className="text-xs text-neutral-500">{(uploadedFile.size / 1024).toFixed(0)} KB · PDF</p>
+                                        </div>
+                                        <button
+                                            onClick={() => { setUploadedFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                                            className="text-neutral-400 hover:text-red-500 transition shrink-0"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div
+                                        onClick={() => fileInputRef.current?.click()}
+                                        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                                        onDragLeave={() => setIsDragging(false)}
+                                        onDrop={(e) => {
+                                            e.preventDefault();
+                                            setIsDragging(false);
+                                            const f = e.dataTransfer.files?.[0];
+                                            if (f && f.type === "application/pdf") setUploadedFile(f);
+                                        }}
+                                        className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all ${isDragging ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20" : "border-neutral-300 dark:border-neutral-700 hover:border-indigo-400 dark:hover:border-indigo-600"}`}
+                                    >
+                                        <Upload className="w-6 h-6 mx-auto mb-2 text-neutral-400" />
+                                        <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-400">Drop your CV PDF here</p>
+                                        <p className="text-xs text-neutral-400 mt-1">or click to browse</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
                     <JobPasteBox value={jdText} onChange={setJdText} />
                     <button
                         onClick={handleOptimize}
-                        disabled={isGenerating || !jdText.trim() || reachedOptimizeLimit}
+                        disabled={isGenerating || !jdText.trim() || reachedOptimizeLimit || (cvSource === "saved" && !resumeData) || (cvSource === "upload" && !uploadedFile)}
                         className="w-full h-14 text-lg rounded-2xl shadow-xl shadow-purple-500/20 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold tracking-wide transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-3"
                     >
                         {reachedOptimizeLimit ? (
@@ -186,43 +303,10 @@ export default function OptimizePage() {
                         ) : isGenerating ? (
                             <>
                                 <RefreshCw className="w-5 h-5 animate-spin" />
-                                Kimi K2 Thinking… (this may take 30–60s)
+                                Generating… (this may take 30–60s)
                             </>
                         ) : `🚀 Optimize with AI${!isPaid ? ` (${FREE_OPTIMIZE_LIMIT - optimizeCount} left today)` : ""}`}
                     </button>
-
-
-                    {/* Master CV info card */}
-                    <div className="p-4 bg-white/50 dark:bg-black/30 border border-neutral-200 dark:border-neutral-800 rounded-2xl">
-                        <p className="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Master CV loaded</p>
-                        {resumeData ? (
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 flex items-center justify-center">
-                                    <FileText className="w-4 h-4" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
-                                        {resumeData.name || resumeData.basicInfo?.fullName || "Your CV"}
-                                    </p>
-                                    <p className="text-xs text-neutral-500">
-                                        {Array.isArray(resumeData.experience) ? resumeData.experience.length : 0} jobs · {Array.isArray(resumeData.education) ? resumeData.education.length : 0} education entries
-                                    </p>
-                                </div>
-                                <span className="ml-auto text-[10px] font-bold bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full">Ready</span>
-                            </div>
-                        ) : (
-                            <div className="flex flex-col gap-2">
-                                <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
-                                    ⚠️ No CV saved yet — <a href="/resume" className="underline font-bold">go to My CV</a> to create one.
-                                </p>
-                                <button
-                                    onClick={fetchResume}
-                                    className="text-xs text-indigo-600 dark:text-indigo-400 underline font-bold text-left hover:opacity-80 transition">
-                                    ↻ I already saved it — reload
-                                </button>
-                            </div>
-                        )}
-                    </div>
                 </div>
 
                 {/* RIGHT: Results pane */}
@@ -256,6 +340,7 @@ export default function OptimizePage() {
                                                     data={tailoredCvData}
                                                     templateId={selectedTemplate}
                                                     fileName={`Tailored_CV_${tailoredCvData?.basicInfo?.fullName?.replace(/\s+/g, "_") || "Resume"}.pdf`}
+                                                    watermark={!isPaid}
                                                 />
                                             </div>
                                         )}

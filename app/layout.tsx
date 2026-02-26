@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'AI CV Optimizer | Propel Your Career',
-  description: 'Optimize your CV and cover letter for any job using AI.',
+  title: 'CViq | AI Career Platform',
+  description: 'Optimize your CV, ace interviews, and land your dream job using CViq — the AI-powered career intelligence platform.'
 };
 
 export default function RootLayout({

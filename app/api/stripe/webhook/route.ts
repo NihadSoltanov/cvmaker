@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-// import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function POST(req: Request) {
     const body = await req.text();
@@ -19,13 +19,27 @@ export async function POST(req: Request) {
 
     // Handle the event
     switch (event.type) {
-        case 'checkout.session.completed':
-            // const session = event.data.object;
-            // await supabase.from('subscriptions').update({ plan: 'pro', status: 'active' }).eq('user_id', session.client_reference_id)
+        case 'checkout.session.completed': {
+            const session = event.data.object as any;
+            const userId = session.client_reference_id || session.metadata?.userId;
+            if (userId) {
+                await supabaseAdmin.from('profiles').update({ is_paid: true }).eq('id', userId);
+            }
             break;
+        }
+        case 'customer.subscription.deleted':
+        case 'customer.subscription.updated': {
+            const sub = event.data.object as any;
+            const userId = sub.metadata?.userId;
+            if (userId && event.type === 'customer.subscription.deleted') {
+                await supabaseAdmin.from('profiles').update({ is_paid: false }).eq('id', userId);
+            }
+            break;
+        }
         default:
-            console.log(`Unhandled event type ${event.type}`);
+            break;
     }
 
     return NextResponse.json({ received: true });
 }
+

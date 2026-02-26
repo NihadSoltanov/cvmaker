@@ -28,7 +28,7 @@ export default function CareerCoachPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [msgCount, setMsgCount] = useState(0);
     const bottomRef = useRef<HTMLDivElement>(null);
-    const { isPaid } = useIsPaid();
+    const { isPaid, loading: isPaidLoading } = useIsPaid();
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -46,7 +46,8 @@ export default function CareerCoachPage() {
         } catch { /* ignore */ }
     }, []);
 
-    const reachedLimit = !isPaid && msgCount >= FREE_MSG_LIMIT;
+    // Wait for isPaid to finish loading before applying the limit — avoids false-blocking paid users
+    const reachedLimit = !isPaidLoading && !isPaid && msgCount >= FREE_MSG_LIMIT;
     const remaining = isPaid ? Infinity : FREE_MSG_LIMIT - msgCount;
 
     const sendMessage = async (text?: string) => {

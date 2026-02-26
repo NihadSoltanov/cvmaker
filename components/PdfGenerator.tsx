@@ -2,7 +2,7 @@
 
 import React from "react";
 import {
-    Document, Page, Text, View, StyleSheet, Font,
+    Document, Page, Text, View, StyleSheet, Font, Svg, Path, Circle,
 } from "@react-pdf/renderer";
 import type { CvData } from "./CvTemplates";
 
@@ -42,7 +42,7 @@ const classicStyles = StyleSheet.create({
     skillsRow: { fontSize: 10, marginBottom: 2 },
 });
 
-function ClassicPDF({ d }: { d: CvData }) {
+function ClassicPDF({ d, watermark = false }: { d: CvData; watermark?: boolean }) {
     const contacts = [d.basicInfo?.phone, d.basicInfo?.email, d.basicInfo?.location].filter(Boolean);
     const links = [d.basicInfo?.linkedin, d.basicInfo?.portfolio].filter(Boolean);
 
@@ -58,6 +58,7 @@ function ClassicPDF({ d }: { d: CvData }) {
     return (
         <Document title={`CV – ${d.basicInfo?.fullName || "Resume"}`}>
             <Page size="A4" style={classicStyles.page}>
+                {watermark && <WatermarkLayer />}
                 <Text style={classicStyles.name}>{d.basicInfo?.fullName || "Your Name"}</Text>
                 {contacts.length > 0 && <Text style={classicStyles.contactRow}>{contacts.join("  •  ")}</Text>}
                 {links.length > 0 && <Text style={classicStyles.contactRow}>{links.join("  •  ")}</Text>}
@@ -145,12 +146,13 @@ const modernStyles = StyleSheet.create({
     skillBarFill: { height: 2.5, backgroundColor: "rgba(255,255,255,0.7)", borderRadius: 2 },
 });
 
-function ModernPDF({ d }: { d: CvData }) {
+function ModernPDF({ d, watermark = false, accent = "#4338ca" }: { d: CvData; watermark?: boolean; accent?: string }) {
     return (
         <Document title={`CV – ${d.basicInfo?.fullName || "Resume"}`}>
             <Page size="A4" style={modernStyles.page}>
+                {watermark && <WatermarkLayer />}
                 {/* Sidebar */}
-                <View style={modernStyles.sidebar}>
+                <View style={[modernStyles.sidebar, { backgroundColor: accent }]}>
                     <Text style={modernStyles.sidebarName}>{d.basicInfo?.fullName || "Your Name"}</Text>
 
                     <Text style={modernStyles.sidebarSectionTitle}>Contact</Text>
@@ -239,19 +241,142 @@ function ModernPDF({ d }: { d: CvData }) {
     );
 }
 
+// ──────────────────────────────────────────────
+// HEADER PDF (colored top banner, any accent)
+// ──────────────────────────────────────────────
+function HeaderPDF({ d, watermark = false, accent = "#7c3aed" }: { d: CvData; watermark?: boolean; accent?: string }) {
+    const contacts = [d.basicInfo?.phone, d.basicInfo?.email, d.basicInfo?.location].filter(Boolean);
+    return (
+        <Document title={`CV – ${d.basicInfo?.fullName || "Resume"}`}>
+            <Page size="A4" style={{ fontFamily: "Helvetica", fontSize: 10, backgroundColor: "#fff", color: "#111" }}>
+                {watermark && <WatermarkLayer />}
+                {/* Header banner */}
+                <View style={{ backgroundColor: accent, padding: "32 40 24", color: "#fff" }}>
+                    <Text style={{ fontSize: 24, fontFamily: "Helvetica-Bold", color: "#fff", marginBottom: 8 }}>{d.basicInfo?.fullName || "Your Name"}</Text>
+                    <Text style={{ fontSize: 9.5, color: "rgba(255,255,255,0.85)" }}>{contacts.join("  ·  ")}</Text>
+                    {(d.basicInfo?.linkedin || d.basicInfo?.portfolio) && (
+                        <Text style={{ fontSize: 8.5, color: "rgba(255,255,255,0.65)", marginTop: 3 }}>
+                            {[d.basicInfo.linkedin, d.basicInfo.portfolio].filter(Boolean).join("  ·  ")}
+                        </Text>
+                    )}
+                </View>
+                {/* Main content */}
+                <View style={{ padding: "24 40 32" }}>
+                    {d.summary && (
+                        <View style={{ marginBottom: 14 }}>
+                            <Text style={{ fontSize: 8.5, fontFamily: "Helvetica-Bold", textTransform: "uppercase", letterSpacing: 1.5, color: accent, borderBottom: `1pt solid ${accent}40`, paddingBottom: 2, marginBottom: 7 }}>About</Text>
+                            <Text style={{ fontSize: 10, color: "#444", lineHeight: 1.55 }}>{d.summary}</Text>
+                        </View>
+                    )}
+                    {d.experience?.some(e => e.company) && (
+                        <View style={{ marginBottom: 14 }}>
+                            <Text style={{ fontSize: 8.5, fontFamily: "Helvetica-Bold", textTransform: "uppercase", letterSpacing: 1.5, color: accent, borderBottom: `1pt solid ${accent}40`, paddingBottom: 2, marginBottom: 8 }}>Experience</Text>
+                            {d.experience!.map((e, i) => (
+                                <View key={i} style={{ marginBottom: 10 }}>
+                                    <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 1 }}>
+                                        <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 10.5 }}>{e.role}</Text>
+                                        <Text style={{ fontSize: 8.5, color: "#888" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : e.startDate ? " – Present" : ""}</Text>
+                                    </View>
+                                    <Text style={{ fontSize: 9.5, color: accent, fontFamily: "Helvetica-Bold", marginBottom: 3 }}>{e.company}</Text>
+                                    <Text style={{ fontSize: 9.5, color: "#555", lineHeight: 1.5 }}>{e.description}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    )}
+                    {d.education?.some(e => e.institution) && (
+                        <View style={{ marginBottom: 14 }}>
+                            <Text style={{ fontSize: 8.5, fontFamily: "Helvetica-Bold", textTransform: "uppercase", letterSpacing: 1.5, color: accent, borderBottom: `1pt solid ${accent}40`, paddingBottom: 2, marginBottom: 8 }}>Education</Text>
+                            {d.education!.map((e, i) => (
+                                <View key={i} style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 7 }}>
+                                    <View>
+                                        <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 10.5 }}>{e.institution}</Text>
+                                        <Text style={{ fontSize: 9.5, color: "#555" }}>{e.degree}</Text>
+                                    </View>
+                                    <Text style={{ fontSize: 8.5, color: "#888" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : ""}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    )}
+                    {(d.skills?.length || d.languages?.length) ? (
+                        <View>
+                            <Text style={{ fontSize: 8.5, fontFamily: "Helvetica-Bold", textTransform: "uppercase", letterSpacing: 1.5, color: accent, borderBottom: `1pt solid ${accent}40`, paddingBottom: 2, marginBottom: 8 }}>Skills & Languages</Text>
+                            {d.skills && d.skills.length > 0 && <Text style={{ fontSize: 10, marginBottom: 3 }}><Text style={{ fontFamily: "Helvetica-Bold" }}>Skills: </Text>{d.skills.join(" · ")}</Text>}
+                            {d.languages && d.languages.length > 0 && <Text style={{ fontSize: 10 }}><Text style={{ fontFamily: "Helvetica-Bold" }}>Languages: </Text>{d.languages.join(" · ")}</Text>}
+                        </View>
+                    ) : null}
+                </View>
+            </Page>
+        </Document>
+    );
+}
+
+// ──────────────────────────────────────────────
+// WATERMARK overlay — single large centered diagonal logo mark
+// ──────────────────────────────────────────────
+function WatermarkLayer() {
+    return (
+        <View style={{
+            position: "absolute",
+            top: 0, left: 0, right: 0, bottom: 0,
+            justifyContent: "center",
+            alignItems: "center",
+        }}>
+            {/* Single large diagonal CViq logo mark — solid gray, opacity on wrapper */}
+            <View style={{ transform: [{ rotate: "-30deg" }], opacity: 0.09 }}>
+                <Svg viewBox="0 0 100 100" style={{ width: 320, height: 320 }}>
+                    {/* C arc */}
+                    <Path
+                        d="M52 10C28 10 10 28 10 50C10 72 28 90 52 90C63 90 72 85 77 78"
+                        stroke="#6b7280"
+                        strokeWidth="7"
+                        fill="none"
+                        strokeLinecap="round"
+                    />
+                    {/* V shape */}
+                    <Path
+                        d="M62 12L80 78L98 12"
+                        stroke="#6b7280"
+                        strokeWidth="7"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+                    {/* AI dot — gray */}
+                    <Circle cx="93" cy="6" r="9" fill="#6b7280" />
+                    <Circle cx="93" cy="6" r="4" fill="#d1d5db" />
+                </Svg>
+            </View>
+        </View>
+    );
+}
+
 // Dispatcher
-export function getPdfDocument(templateId: string, data: CvData): React.ReactElement {
-    switch (templateId) {
-        case "modern": return <ModernPDF d={data} />;
-        default: return <ClassicPDF d={data} />;
+export function getPdfDocument(templateId: string, data: CvData, watermark = false): React.ReactElement {
+    // Sidebar-layout templates (different accent colors)
+    const sidebarAccents: Record<string, string> = {
+        modern: "#4338ca", teal: "#0d9488", cobalt: "#1d4ed8",
+    };
+    // Header-layout templates
+    const headerAccents: Record<string, string> = {
+        creative: "#7c3aed", rose: "#e11d48", startup: "#6d28d9",
+        terra: "#c2410c", forest: "#14532d", "navy-gold": "#1e3a5f",
+    };
+    if (sidebarAccents[templateId]) {
+        return <ModernPDF d={data} watermark={watermark} accent={sidebarAccents[templateId]} />;
     }
+    if (headerAccents[templateId]) {
+        return <HeaderPDF d={data} watermark={watermark} accent={headerAccents[templateId]} />;
+    }
+    // Single-column templates map to ClassicPDF
+    return <ClassicPDF d={data} watermark={watermark} />;
 }
 
 // Download Button Component — uses programmatic blob approach for proper filename
-export function PdfDownloadButton({ data, templateId, fileName }: {
+export function PdfDownloadButton({ data, templateId, fileName, watermark = false }: {
     data: CvData;
     templateId: string;
     fileName?: string;
+    watermark?: boolean;
 }) {
     const [loading, setLoading] = React.useState(false);
 
@@ -259,7 +384,7 @@ export function PdfDownloadButton({ data, templateId, fileName }: {
         setLoading(true);
         try {
             const { pdf } = await import("@react-pdf/renderer");
-            const doc = getPdfDocument(templateId, data);
+            const doc = getPdfDocument(templateId, data, watermark);
             const blob = await pdf(doc as any).toBlob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");

@@ -9,9 +9,10 @@ export function PricingCards() {
             price: "$0",
             description: "Perfect for testing the waters and exploring the tailoring engine.",
             features: [
-                "3 AI Optimizations Total",
-                "1 PDF Export per day",
-                "Watermarked Share Link",
+                "3 AI CV Optimisations per day",
+                "3 ATS Scans per day",
+                "5 AI Coach messages per day",
+                "1 PDF Export per day (watermarked)",
                 "Basic Templates"
             ],
             buttonText: "Start Free",
@@ -23,11 +24,12 @@ export function PricingCards() {
             period: "/year",
             description: "Everything you need to land your dream job with zero friction.",
             features: [
-                "Unlimited AI Optimizations",
-                "Unlimited PDF Exports",
-                "No Watermarks",
+                "Unlimited AI Optimisations",
+                "Unlimited ATS Scans",
+                "Unlimited AI Career Coach",
+                "Unlimited PDF Exports (no watermark)",
                 "Share Link Analytics",
-                "Priority Generation APIs"
+                "Priority Kimi K2 API Access"
             ],
             buttonText: "Upgrade to Pro",
             featured: true
