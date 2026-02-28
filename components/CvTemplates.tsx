@@ -48,6 +48,19 @@ export const CV_TEMPLATES: TemplateInfo[] = [
     { id: "forest", name: "Forest Elite", description: "Deep forest green — stands out in sustainability or finance.", tag: "Premium", isPro: true, hasPhoto: false, accentColor: "#14532d" },
     { id: "copper", name: "Copper Elegant", description: "Warm copper tones — sophisticated and memorable.", tag: "Elegant", isPro: true, hasPhoto: false, accentColor: "#b45309" },
     { id: "slate", name: "Slate Edge", description: "Slate-blue accents with bold section markers.", tag: "Modern", isPro: true, hasPhoto: false, accentColor: "#475569" },
+    { id: "ats-pro", name: "ATS Pro Strict", description: "Zero color, Arial, single-column. Highest possible ATS parse rate.", tag: "ATS Pure", isPro: true, isRecommended: false, hasPhoto: false, accentColor: "#111111" },
+    { id: "ats-harvard", name: "Harvard Format", description: "Centered header, Times New Roman — career-services gold standard.", tag: "ATS Classic", isPro: true, hasPhoto: false, accentColor: "#000000" },
+    { id: "ats-impact", name: "ATS Impact", description: "Structured header bar + navy accent lines. ATS-safe with visual clarity.", tag: "ATS Pro", isPro: true, hasPhoto: false, accentColor: "#1e40af" },
+    { id: "ats-federal", name: "Federal / Gov", description: "US USAJOBS-style with shaded section headers. Ideal for public sector.", tag: "ATS Gov", isPro: true, hasPhoto: false, accentColor: "#374151" },
+    { id: "ats-consult", name: "Consulting", description: "McKinsey / Bain style — impact bullets, left accent strip, navy.", tag: "ATS Consulting", isPro: true, hasPhoto: false, accentColor: "#0f4c81" },
+    { id: "ats-finance", name: "Finance / Banking", description: "Serif double-line headings. Conservative and ATS-safe for finance roles.", tag: "ATS Finance", isPro: true, hasPhoto: false, accentColor: "#111111" },
+    { id: "ats-medical", name: "Medical / Healthcare", description: "Teal accent, credential-first layout for clinical and healthcare CVs.", tag: "ATS Medical", isPro: true, hasPhoto: false, accentColor: "#0e7490" },
+    { id: "ats-it", name: "IT / Engineering", description: "Monospace font, skills-first layout. Ideal for developers and sysadmins.", tag: "ATS IT", isPro: true, hasPhoto: false, accentColor: "#111111" },
+    { id: "ats-legal", name: "Legal", description: "Numbered Roman sections, formal serif. Best for law firms and courts.", tag: "ATS Legal", isPro: true, hasPhoto: false, accentColor: "#1a1a1a" },
+    { id: "ats-sales", name: "Sales / BD", description: "Green accent, metrics-front bullets. Perfect for sales and BD roles.", tag: "ATS Sales", isPro: true, hasPhoto: false, accentColor: "#16a34a" },
+    { id: "ats-stem", name: "STEM / Research", description: "Publication-style serif layout for scientists, engineers and researchers.", tag: "ATS STEM", isPro: true, hasPhoto: false, accentColor: "#1a1a1a" },
+    { id: "ats-corporate", name: "Corporate Blue", description: "Dark navy header, clean single-column. Ideal for corporate/admin roles.", tag: "ATS Corporate", isPro: true, hasPhoto: false, accentColor: "#1e3a5f" },
+    { id: "ats-exec-pro", name: "Executive Pro", description: "Large serif name, blockquote summary. For C-suite and senior leaders.", tag: "ATS Executive", isPro: true, hasPhoto: false, accentColor: "#000000" },
 ];
 
 // ─────────────────────────────────────────────────
@@ -128,28 +141,49 @@ function bullets(desc?: string) {
     });
 }
 
+// ─── clickable link helpers ───────────────────────
+function Lnk({ href, children, style }: { href?: string; children?: React.ReactNode; style?: React.CSSProperties }) {
+    if (!href) return null;
+    const url = href.startsWith("http://") || href.startsWith("https://") ? href : `https://${href}`;
+    return <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: 2, ...style }}>{children ?? href}</a>;
+}
+function CvLinksLine({ d, style }: { d: CvData; style?: React.CSSProperties }) {
+    const links = [d.basicInfo?.linkedin, d.basicInfo?.portfolio].filter(Boolean) as string[];
+    if (!links.length) return null;
+    return (
+        <div style={style}>
+            {links.map((lnk, i) => (
+                <React.Fragment key={i}>
+                    {i > 0 && "  •  "}
+                    <Lnk href={lnk}>{lnk}</Lnk>
+                </React.Fragment>
+            ))}
+        </div>
+    );
+}
+
 // ═══════════════════════════════════════════════════
 // TEMPLATE 1: CLASSIC ATS
 // ═══════════════════════════════════════════════════
 function TemplateClassic({ d }: { d: CvData }) {
     const S = {
-        page: { fontFamily: "'Times New Roman', Times, serif", color: "#000", background: "#fff", padding: "52px 56px", fontSize: 12, lineHeight: 1.55 } as React.CSSProperties,
-        name: { fontSize: 26, fontWeight: 700, textAlign: "center" as const, letterSpacing: 2, textTransform: "uppercase" as const, marginBottom: 6 },
-        contact: { textAlign: "center" as const, fontSize: 11, color: "#333", marginBottom: 3 },
-        hr: { borderTop: "2px solid #000", margin: "12px 0 16px" },
-        secTitle: { fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 2, borderBottom: "1px solid #000", paddingBottom: 2, marginBottom: 8, marginTop: 0 },
-        sec: { marginBottom: 16 },
-        expRow: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 1 } as React.CSSProperties,
-        role: { fontWeight: 700, fontSize: 12 },
-        dates: { fontSize: 10.5, color: "#555" },
-        company: { fontStyle: "italic", fontSize: 11, marginBottom: 4, color: "#444" },
-        bullet: { fontSize: 11, lineHeight: 1.5, paddingLeft: 12 },
+        page: { fontFamily: "'Times New Roman', Times, serif", color: "#1a1a1a", background: "#fff", padding: "42px 52px", fontSize: 11.5, lineHeight: 1.62 } as React.CSSProperties,
+        name: { fontSize: 24, fontWeight: 700, textAlign: "center" as const, letterSpacing: 2.5, textTransform: "uppercase" as const, marginBottom: 7, color: "#000" },
+        contact: { textAlign: "center" as const, fontSize: 10, color: "#444", marginBottom: 3 },
+        hr: { borderTop: "1.5px solid #222", margin: "10px 0 14px" },
+        secTitle: { fontSize: 11.5, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 2.5, borderBottom: "1.5px solid #222", paddingBottom: 3, marginBottom: 9, marginTop: 16, color: "#000" },
+        sec: { marginBottom: 18 },
+        expRow: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 2 } as React.CSSProperties,
+        role: { fontWeight: 700, fontSize: 12.5, color: "#000" },
+        dates: { fontSize: 10, color: "#666", fontStyle: "italic" as const },
+        company: { fontStyle: "italic", fontSize: 11.5, marginBottom: 5, color: "#333" },
+        bullet: { fontSize: 11, lineHeight: 1.62, paddingLeft: 14, marginBottom: 3 },
     };
     return (
         <div style={S.page}>
             <div style={S.name}>{d.basicInfo?.fullName || "Your Name"}</div>
             {contactStr(d) && <div style={S.contact}>{contactStr(d)}</div>}
-            {linksStr(d) && <div style={S.contact}>{linksStr(d)}</div>}
+            <CvLinksLine d={d} style={S.contact} />
             <div style={S.hr} />
 
             {d.summary && (
@@ -218,11 +252,11 @@ function TemplateModern({ d }: { d: CvData }) {
                 {d.photo && <img src={d.photo} alt="" style={{ width: 96, height: 96, borderRadius: "50%", objectFit: "cover", border: "2.5px solid rgba(255,255,255,0.35)", alignSelf: "center", marginBottom: 14 }} />}
                 <div style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.3, marginBottom: 16 }}>{d.basicInfo?.fullName || "Your Name"}</div>
                 <SideLabel>Contact</SideLabel>
-                {d.basicInfo?.phone && <p style={{ fontSize: 10.5, marginBottom: 5, color: "rgba(255,255,255,.9)" }}>{d.basicInfo.phone}</p>}
-                {d.basicInfo?.email && <p style={{ fontSize: 10.5, marginBottom: 5, wordBreak: "break-all", color: "rgba(255,255,255,.9)" }}>{d.basicInfo.email}</p>}
+                {d.basicInfo?.phone && <p style={{ fontSize: 10.5, marginBottom: 5, color: "rgba(255,255,255,.9)" }}><Lnk href={`tel:${d.basicInfo.phone}`}>{d.basicInfo.phone}</Lnk></p>}
+                {d.basicInfo?.email && <p style={{ fontSize: 10.5, marginBottom: 5, wordBreak: "break-all", color: "rgba(255,255,255,.9)" }}><Lnk href={`mailto:${d.basicInfo.email}`}>{d.basicInfo.email}</Lnk></p>}
                 {d.basicInfo?.location && <p style={{ fontSize: 10.5, marginBottom: 5, color: "rgba(255,255,255,.9)" }}>{d.basicInfo.location}</p>}
-                {d.basicInfo?.linkedin && <p style={{ fontSize: 9.5, marginBottom: 5, wordBreak: "break-all", color: "rgba(255,255,255,.75)" }}>{d.basicInfo.linkedin}</p>}
-                {d.basicInfo?.portfolio && <p style={{ fontSize: 9.5, wordBreak: "break-all", color: "rgba(255,255,255,.75)" }}>{d.basicInfo.portfolio}</p>}
+                {d.basicInfo?.linkedin && <p style={{ fontSize: 9.5, marginBottom: 5, wordBreak: "break-all", color: "rgba(255,255,255,.75)" }}><Lnk href={d.basicInfo.linkedin}>{d.basicInfo.linkedin}</Lnk></p>}
+                {d.basicInfo?.portfolio && <p style={{ fontSize: 9.5, wordBreak: "break-all", color: "rgba(255,255,255,.75)" }}><Lnk href={d.basicInfo.portfolio}>{d.basicInfo.portfolio}</Lnk></p>}
 
                 {d.skills && d.skills.length > 0 && <>
                     <SideLabel top>Skills</SideLabel>
@@ -297,7 +331,7 @@ function TemplateMinimal({ d }: { d: CvData }) {
             <div style={{ borderLeft: "4px solid #111", paddingLeft: 18, marginBottom: 30 }}>
                 <div style={{ fontSize: 24, fontWeight: 700 }}>{d.basicInfo?.fullName || "Your Name"}</div>
                 <div style={{ fontSize: 11.5, color: "#555", marginTop: 5 }}>{contactStr(d)}</div>
-                {linksStr(d) && <div style={{ fontSize: 10.5, color: "#888", marginTop: 3 }}>{linksStr(d)}</div>}
+                <CvLinksLine d={d} style={{ fontSize: 10.5, color: "#888", marginTop: 3 }} />
             </div>
             {d.summary && <p style={{ fontSize: 11.5, color: "#444", marginBottom: 26, lineHeight: 1.7, maxWidth: 620 }}>{d.summary}</p>}
 
@@ -357,10 +391,10 @@ function TemplateExecutive({ d }: { d: CvData }) {
             <div style={{ background: "#0f172a", color: "#fff", padding: "38px 52px 30px" }}>
                 <div style={{ fontSize: 34, fontWeight: 700, letterSpacing: -0.5, marginBottom: 10 }}>{d.basicInfo?.fullName || "Your Name"}</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "0 28px", fontSize: 12.5, color: "#94a3b8" }}>
-                    {d.basicInfo?.phone && <span>{d.basicInfo.phone}</span>}
-                    {d.basicInfo?.email && <span>{d.basicInfo.email}</span>}
+                    {d.basicInfo?.phone && <span><Lnk href={`tel:${d.basicInfo.phone}`}>{d.basicInfo.phone}</Lnk></span>}
+                    {d.basicInfo?.email && <span><Lnk href={`mailto:${d.basicInfo.email}`}>{d.basicInfo.email}</Lnk></span>}
                     {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
-                    {d.basicInfo?.linkedin && <span>{d.basicInfo.linkedin}</span>}
+                    {d.basicInfo?.linkedin && <span><Lnk href={d.basicInfo.linkedin}>{d.basicInfo.linkedin}</Lnk></span>}
                 </div>
             </div>
             <div style={{ padding: "30px 52px" }}>
@@ -429,7 +463,7 @@ function TemplateCreative({ d }: { d: CvData }) {
                         {d.basicInfo?.email && <span>{d.basicInfo.email}</span>}
                         {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
                     </div>
-                    {linksStr(d) && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 4 }}>{linksStr(d)}</div>}
+                    {linksStr(d) && <CvLinksLine d={d} style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 4 }} />}
                 </div>
             </div>
             <div style={{ padding: "26px 38px" }}>
@@ -497,7 +531,7 @@ function TemplateEuro({ d }: { d: CvData }) {
                             {d.basicInfo?.phone && <tr><td style={{ color: "#888", paddingRight: 18, paddingBottom: 3, width: 120, verticalAlign: "top" }}>Telephone</td><td>{d.basicInfo.phone}</td></tr>}
                             {d.basicInfo?.email && <tr><td style={{ color: "#888", paddingRight: 18, paddingBottom: 3, verticalAlign: "top" }}>E-mail</td><td>{d.basicInfo.email}</td></tr>}
                             {d.basicInfo?.location && <tr><td style={{ color: "#888", paddingRight: 18, paddingBottom: 3, verticalAlign: "top" }}>Address</td><td>{d.basicInfo.location}</td></tr>}
-                            {d.basicInfo?.linkedin && <tr><td style={{ color: "#888", paddingRight: 18, paddingBottom: 3, verticalAlign: "top" }}>LinkedIn</td><td>{d.basicInfo.linkedin}</td></tr>}
+                            {d.basicInfo?.linkedin && <tr><td style={{ color: "#888", paddingRight: 18, paddingBottom: 3, verticalAlign: "top" }}>LinkedIn</td><td><Lnk href={d.basicInfo.linkedin}>{d.basicInfo.linkedin}</Lnk></td></tr>}
                         </tbody>
                     </table>
                 </div>
@@ -580,7 +614,7 @@ function TemplateTimeline({ d }: { d: CvData }) {
             <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: `3px solid ${accent}` }}>
                 <div style={{ fontSize: 30, fontWeight: 700 }}>{d.basicInfo?.fullName || "Your Name"}</div>
                 <div style={{ fontSize: 11.5, color: "#666", marginTop: 6 }}>{[d.basicInfo?.email, d.basicInfo?.phone, d.basicInfo?.location].filter(Boolean).join("  ·  ")}</div>
-                {linksStr(d) && <div style={{ fontSize: 10.5, color: "#999", marginTop: 3 }}>{linksStr(d)}</div>}
+                <CvLinksLine d={d} style={{ fontSize: 10.5, color: "#999", marginTop: 3 }} />
             </div>
             {d.summary && <p style={{ fontSize: 12.5, color: "#444", lineHeight: 1.7, marginBottom: 24, fontStyle: "italic" }}>{d.summary}</p>}
             {d.experience?.some(e => e.company) && <>
@@ -624,7 +658,7 @@ function TemplateClean({ d }: { d: CvData }) {
                     {d.basicInfo?.phone && <span>{d.basicInfo.phone}</span>}
                     {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
                 </div>
-                {linksStr(d) && <div style={{ fontSize: 12, color: "#999", marginTop: 6 }}>{linksStr(d)}</div>}
+                <CvLinksLine d={d} style={{ fontSize: 12, color: "#999", marginTop: 6 }} />
             </div>
             {d.summary && <><div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 3, color: "#000", marginBottom: 8 }}>About</div><p style={{ fontSize: 13.5, color: "#444", lineHeight: 1.75, maxWidth: 650, marginBottom: 32 }}>{d.summary}</p></>}
             {d.experience?.some(e => e.company) && <>
@@ -664,7 +698,7 @@ function TemplateTeal({ d }: { d: CvData }) {
                 {d.basicInfo?.phone && <p style={{ fontSize: 10.5, marginBottom: 4, color: "rgba(255,255,255,.9)" }}>{d.basicInfo.phone}</p>}
                 {d.basicInfo?.email && <p style={{ fontSize: 10, marginBottom: 4, wordBreak: "break-all", color: "rgba(255,255,255,.9)" }}>{d.basicInfo.email}</p>}
                 {d.basicInfo?.location && <p style={{ fontSize: 10.5, marginBottom: 4, color: "rgba(255,255,255,.9)" }}>{d.basicInfo.location}</p>}
-                {d.basicInfo?.linkedin && <p style={{ fontSize: 9, marginBottom: 4, wordBreak: "break-all", color: "rgba(255,255,255,.7)" }}>{d.basicInfo.linkedin}</p>}
+                {d.basicInfo?.linkedin && <p style={{ fontSize: 9, marginBottom: 4, wordBreak: "break-all", color: "rgba(255,255,255,.7)" }}><Lnk href={d.basicInfo.linkedin}>{d.basicInfo.linkedin}</Lnk></p>}
                 {d.skills && d.skills.length > 0 && <>
                     <div style={{ fontSize: 8.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: "rgba(255,255,255,0.6)", borderBottom: "1px solid rgba(255,255,255,0.25)", paddingBottom: 4, marginBottom: 8, marginTop: 16 }}>Skills</div>
                     {d.skills.slice(0, 10).map((sk, i) => <div key={i} style={{ marginBottom: 5 }}><p style={{ fontSize: 10.5, color: "rgba(255,255,255,.9)", marginBottom: 2 }}>{sk}</p><div style={{ height: 3, borderRadius: 2, background: "rgba(255,255,255,0.2)" }}><div style={{ height: 3, borderRadius: 2, background: "rgba(255,255,255,0.75)", width: `${65 + (i * 13 % 32)}%` }} /></div></div>)}
@@ -700,7 +734,7 @@ function TemplateRose({ d }: { d: CvData }) {
                         {d.basicInfo?.email && <span>{d.basicInfo.email}</span>}
                         {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
                     </div>
-                    {linksStr(d) && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 4 }}>{linksStr(d)}</div>}
+                    {linksStr(d) && <CvLinksLine d={d} style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 4 }} />}
                 </div>
             </div>
             <div style={{ padding: "24px 38px" }}>
@@ -728,7 +762,7 @@ function TemplateNavyGold({ d }: { d: CvData }) {
                     {d.basicInfo?.phone && <span>{d.basicInfo.phone}</span>}
                     {d.basicInfo?.email && <span>{d.basicInfo.email}</span>}
                     {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
-                    {d.basicInfo?.linkedin && <span>{d.basicInfo.linkedin}</span>}
+                    {d.basicInfo?.linkedin && <span><Lnk href={d.basicInfo.linkedin}>{d.basicInfo.linkedin}</Lnk></span>}
                 </div>
             </div>
             <div style={{ padding: "28px 52px" }}>
@@ -767,7 +801,7 @@ function TemplateEmerald({ d }: { d: CvData }) {
                     {d.basicInfo?.email && <span>{d.basicInfo.email}</span>}
                     {d.basicInfo?.phone && <span>{d.basicInfo.phone}</span>}
                     {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
-                    {d.basicInfo?.linkedin && <span>{d.basicInfo.linkedin}</span>}
+                    {d.basicInfo?.linkedin && <span><Lnk href={d.basicInfo.linkedin}>{d.basicInfo.linkedin}</Lnk></span>}
                 </div>
             </div>
             {d.summary && <p style={{ fontSize: 12, color: "#444", lineHeight: 1.7, marginBottom: 24, paddingLeft: 12, borderLeft: `3px solid ${accent}` }}>{d.summary}</p>}
@@ -797,7 +831,7 @@ function TemplateAcademic({ d }: { d: CvData }) {
             <div style={{ textAlign: "center", marginBottom: 28 }}>
                 <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: 0.5, marginBottom: 8 }}>{d.basicInfo?.fullName || "Your Name"}</div>
                 <div style={{ fontSize: 11.5, color: "#333", marginBottom: 3 }}>{[d.basicInfo?.email, d.basicInfo?.phone, d.basicInfo?.location].filter(Boolean).join(" | ")}</div>
-                {linksStr(d) && <div style={{ fontSize: 11, color: "#666" }}>{linksStr(d)}</div>}
+                <CvLinksLine d={d} style={{ fontSize: 11, color: "#666" }} />
                 <div style={{ borderBottom: "2px solid #000", marginTop: 14 }} />
             </div>
             {d.summary && <><div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.5, letterSpacing: 2, marginBottom: 6 }}>Research / Professional Profile</div><p style={{ fontSize: 12, lineHeight: 1.7, marginBottom: 20, textAlign: "justify" }}>{d.summary}</p></>}
@@ -832,7 +866,7 @@ function TemplateStartup({ d }: { d: CvData }) {
                     {d.basicInfo?.email && <span>{d.basicInfo.email}</span>}
                     {d.basicInfo?.phone && <span>{d.basicInfo.phone}</span>}
                     {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
-                    {d.basicInfo?.linkedin && <span>{d.basicInfo.linkedin}</span>}
+                    {d.basicInfo?.linkedin && <span><Lnk href={d.basicInfo.linkedin}>{d.basicInfo.linkedin}</Lnk></span>}
                 </div>
             </div>
             <div style={{ padding: "28px 40px" }}>
@@ -866,7 +900,7 @@ function TemplateTerra({ d }: { d: CvData }) {
                 {d.photo && <img src={d.photo} alt="" style={{ width: 84, height: 84, borderRadius: "50%", objectFit: "cover", border: `3px solid ${accent}`, float: "right", marginLeft: 20, marginBottom: 10 }} />}
                 <div style={{ fontSize: 32, fontWeight: 700, color: accent }}>{d.basicInfo?.fullName || "Your Name"}</div>
                 <div style={{ fontSize: 12, color: "#78350f", marginTop: 6 }}>{[d.basicInfo?.email, d.basicInfo?.phone, d.basicInfo?.location].filter(Boolean).join("  ·  ")}</div>
-                {linksStr(d) && <div style={{ fontSize: 11, color: "#92400e", marginTop: 3 }}>{linksStr(d)}</div>}
+                <CvLinksLine d={d} style={{ fontSize: 11, color: "#92400e", marginTop: 3 }} />
                 <div style={{ clear: "both" }} />
             </div>
             {d.summary && <><div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2.5, color: accent, marginBottom: 8 }}>About</div><p style={{ fontSize: 12.5, color: "#44403c", lineHeight: 1.7, marginBottom: 20 }}>{d.summary}</p></>}
@@ -900,7 +934,7 @@ function TemplateCobalt({ d }: { d: CvData }) {
                 {d.basicInfo?.phone && <p style={{ fontSize: 10.5, marginBottom: 5, color: "rgba(255,255,255,.9)" }}>{d.basicInfo.phone}</p>}
                 {d.basicInfo?.email && <p style={{ fontSize: 10, marginBottom: 5, wordBreak: "break-all", color: "rgba(255,255,255,.9)" }}>{d.basicInfo.email}</p>}
                 {d.basicInfo?.location && <p style={{ fontSize: 10.5, marginBottom: 5, color: "rgba(255,255,255,.9)" }}>{d.basicInfo.location}</p>}
-                {d.basicInfo?.linkedin && <p style={{ fontSize: 9, marginBottom: 5, wordBreak: "break-all", color: "rgba(255,255,255,.7)" }}>{d.basicInfo.linkedin}</p>}
+                {d.basicInfo?.linkedin && <p style={{ fontSize: 9, marginBottom: 5, wordBreak: "break-all", color: "rgba(255,255,255,.7)" }}><Lnk href={d.basicInfo.linkedin}>{d.basicInfo.linkedin}</Lnk></p>}
                 {d.skills && d.skills.length > 0 && <><SideLabel top>Skills</SideLabel>{d.skills.slice(0, 10).map((sk, i) => <div key={i} style={{ marginBottom: 6 }}><p style={{ fontSize: 10.5, color: "rgba(255,255,255,.9)", marginBottom: 2 }}>{sk}</p><div style={{ height: 3, borderRadius: 2, background: "rgba(255,255,255,0.2)" }}><div style={{ height: 3, borderRadius: 2, background: "rgba(255,255,255,0.72)", width: `${65 + (i * 13 % 32)}%` }} /></div></div>)}</>}
                 {d.languages && d.languages.length > 0 && <><SideLabel top>Languages</SideLabel>{d.languages.map((l, i) => <p key={i} style={{ fontSize: 10.5, color: "rgba(255,255,255,.9)", marginBottom: 3 }}>{l}</p>)}</>}
             </div>
@@ -927,7 +961,7 @@ function TemplateForest({ d }: { d: CvData }) {
                     {d.basicInfo?.phone && <span>{d.basicInfo.phone}</span>}
                     {d.basicInfo?.email && <span>{d.basicInfo.email}</span>}
                     {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
-                    {d.basicInfo?.linkedin && <span>{d.basicInfo.linkedin}</span>}
+                    {d.basicInfo?.linkedin && <span><Lnk href={d.basicInfo.linkedin}>{d.basicInfo.linkedin}</Lnk></span>}
                 </div>
             </div>
             <div style={{ padding: "28px 52px" }}>
@@ -967,7 +1001,7 @@ function TemplateCopper({ d }: { d: CvData }) {
                         {d.basicInfo?.phone && <span>{d.basicInfo.phone}</span>}
                         {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
                     </div>
-                    {linksStr(d) && <div style={{ fontSize: 11, color: "#92400e", marginTop: 4 }}>{linksStr(d)}</div>}
+                    <CvLinksLine d={d} style={{ fontSize: 11, color: "#92400e", marginTop: 4 }} />
                 </div>
             </div>
             {d.summary && <p style={{ fontSize: 13, color: "#44403c", lineHeight: 1.75, marginBottom: 26, fontStyle: "italic" }}>{d.summary}</p>}
@@ -1001,7 +1035,7 @@ function TemplateSlate({ d }: { d: CvData }) {
                     {d.basicInfo?.phone && <span>{d.basicInfo.phone}</span>}
                     {d.basicInfo?.email && <span>{d.basicInfo.email}</span>}
                     {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
-                    {d.basicInfo?.linkedin && <span>{d.basicInfo.linkedin}</span>}
+                    {d.basicInfo?.linkedin && <span><Lnk href={d.basicInfo.linkedin}>{d.basicInfo.linkedin}</Lnk></span>}
                 </div>
                 <div style={{ position: "absolute", bottom: 0, left: 48, right: 0, height: 4, background: "linear-gradient(90deg, #6366f1, #8b5cf6, #475569)" }} />
             </div>
@@ -1021,6 +1055,747 @@ function TemplateSlate({ d }: { d: CvData }) {
                     {d.languages && d.languages.length > 0 && <p style={{ fontSize: 12, color: "#555" }}><strong>Languages:</strong> {d.languages.join(" · ")}</p>}
                 </> : null}
             </div>
+        </div>
+    );
+}
+
+// ═══════════════════════════════════════════════════
+// TEMPLATE 21: ATS PRO STRICT
+// ═══════════════════════════════════════════════════
+function TemplateATSPro({ d }: { d: CvData }) {
+    return (
+        <div style={{ background: "#fff", fontFamily: "Arial, Helvetica, sans-serif", color: "#111", padding: "40px 52px", fontSize: 11.5, lineHeight: 1.55 }}>
+            <div style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 22, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5 }}>{d.basicInfo?.fullName || "Your Name"}</div>
+                <div style={{ fontSize: 10.5, color: "#444", marginTop: 5, display: "flex", flexWrap: "wrap", gap: "0 14px" }}>
+                    {d.basicInfo?.phone && <span>{d.basicInfo.phone}</span>}
+                    {d.basicInfo?.email && <Lnk href={`mailto:${d.basicInfo.email}`}>{d.basicInfo.email}</Lnk>}
+                    {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
+                    {d.basicInfo?.linkedin && <Lnk href={d.basicInfo.linkedin}>{d.basicInfo.linkedin}</Lnk>}
+                    {d.basicInfo?.portfolio && <Lnk href={d.basicInfo.portfolio}>{d.basicInfo.portfolio}</Lnk>}
+                </div>
+            </div>
+            <div style={{ borderTop: "2px solid #111", marginBottom: 14 }} />
+            {d.summary && <><AtsProSec title="PROFESSIONAL SUMMARY" /><div style={{ fontSize: 11.5, lineHeight: 1.65, marginBottom: 14 }}>{d.summary}</div></>}
+            {d.experience?.some(e => e.company) && (
+                <div style={{ marginBottom: 14 }}>
+                    <AtsProSec title="WORK EXPERIENCE" />
+                    {d.experience!.map((e, i) => (
+                        <div key={i} style={{ marginBottom: 12 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                                <span style={{ fontWeight: 700, fontSize: 12 }}>{e.role}</span>
+                                <span style={{ fontSize: 10.5, color: "#666" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : e.startDate ? " – Present" : ""}</span>
+                            </div>
+                            <div style={{ fontSize: 11, fontStyle: "italic", color: "#444", marginBottom: 3 }}>{e.company}</div>
+                            <div style={{ fontSize: 11, lineHeight: 1.5 }}>{bullets(e.description)}</div>
+                        </div>
+                    ))}
+                </div>
+            )}
+            {d.education?.some(e => e.institution) && (
+                <div style={{ marginBottom: 14 }}>
+                    <AtsProSec title="EDUCATION" />
+                    {d.education!.map((e, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                            <div><div style={{ fontWeight: 700, fontSize: 12 }}>{e.institution}</div><div style={{ fontSize: 11, color: "#555" }}>{e.degree}</div></div>
+                            <div style={{ fontSize: 10.5, color: "#666" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : ""}</div>
+                        </div>
+                    ))}
+                </div>
+            )}
+            {d.skills && d.skills.length > 0 && <><AtsProSec title="SKILLS" /><div style={{ fontSize: 11.5, marginBottom: 14 }}>{d.skills.join("  ·  ")}</div></>}
+            {d.languages && d.languages.length > 0 && <><AtsProSec title="LANGUAGES" /><div style={{ fontSize: 11.5 }}>{d.languages.join("  ·  ")}</div></>}
+        </div>
+    );
+}
+function AtsProSec({ title }: { title: string }) {
+    return <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 2.5, textTransform: "uppercase" as const, borderBottom: "1.5px solid #111", paddingBottom: 2, marginBottom: 8, color: "#111" }}>{title}</div>;
+}
+
+// ═══════════════════════════════════════════════════
+// TEMPLATE 22: ATS HARVARD FORMAT
+// ═══════════════════════════════════════════════════
+function TemplateATSHarvard({ d }: { d: CvData }) {
+    return (
+        <div style={{ background: "#fff", fontFamily: "'Times New Roman', Times, serif", color: "#000", padding: "46px 56px", fontSize: 12, lineHeight: 1.6 }}>
+            <div style={{ textAlign: "center", marginBottom: 14 }}>
+                <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: 0.5, marginBottom: 6 }}>{d.basicInfo?.fullName || "Your Name"}</div>
+                <div style={{ fontSize: 11.5, color: "#333" }}>
+                    {[d.basicInfo?.phone, d.basicInfo?.email, d.basicInfo?.location].filter(Boolean).map((item, i, arr) => (
+                        <React.Fragment key={i}>{item}{i < arr.length - 1 && "  |  "}</React.Fragment>
+                    ))}
+                </div>
+                {(d.basicInfo?.linkedin || d.basicInfo?.portfolio) && (
+                    <div style={{ fontSize: 11, color: "#555", marginTop: 3 }}>
+                        {[d.basicInfo?.linkedin, d.basicInfo?.portfolio].filter(Boolean).map((lnk, i, arr) => (
+                            <React.Fragment key={i}><Lnk href={lnk!}>{lnk}</Lnk>{i < arr.length - 1 && "  |  "}</React.Fragment>
+                        ))}
+                    </div>
+                )}
+                <div style={{ borderBottom: "2px solid #000", marginTop: 10 }} />
+            </div>
+            {d.summary && <HarvSec title="OBJECTIVE / SUMMARY"><p style={{ fontSize: 12, lineHeight: 1.65, textAlign: "justify" as const }}>{d.summary}</p></HarvSec>}
+            {d.education?.some(e => e.institution) && (
+                <HarvSec title="EDUCATION">
+                    {d.education!.map((e, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                            <div><div style={{ fontWeight: 700, fontSize: 13 }}>{e.institution}</div><div style={{ fontStyle: "italic", fontSize: 12 }}>{e.degree}</div></div>
+                            <div style={{ fontSize: 11, textAlign: "right" as const, paddingTop: 2 }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : ""}</div>
+                        </div>
+                    ))}
+                </HarvSec>
+            )}
+            {d.experience?.some(e => e.company) && (
+                <HarvSec title="EXPERIENCE">
+                    {d.experience!.map((e, i) => (
+                        <div key={i} style={{ marginBottom: 14 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" as const }}>
+                                <span style={{ fontWeight: 700, fontSize: 13 }}>{e.company}</span>
+                                <span style={{ fontSize: 11 }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : e.startDate ? " – Present" : ""}</span>
+                            </div>
+                            <div style={{ fontStyle: "italic", fontSize: 12, marginBottom: 4 }}>{e.role}</div>
+                            <div style={{ fontSize: 11.5, paddingLeft: 16, lineHeight: 1.6 }}>{bullets(e.description)}</div>
+                        </div>
+                    ))}
+                </HarvSec>
+            )}
+            {d.skills && d.skills.length > 0 && <HarvSec title="SKILLS"><p style={{ fontSize: 12 }}>{d.skills.join(", ")}</p></HarvSec>}
+            {d.languages && d.languages.length > 0 && <HarvSec title="LANGUAGES"><p style={{ fontSize: 12 }}>{d.languages.join(", ")}</p></HarvSec>}
+        </div>
+    );
+}
+function HarvSec({ title, children }: { title: string; children: React.ReactNode }) {
+    return (
+        <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 1.5, borderBottom: "1px solid #000", paddingBottom: 2, marginBottom: 8 }}>{title}</div>
+            {children}
+        </div>
+    );
+}
+
+// ═══════════════════════════════════════════════════
+// TEMPLATE 23: ATS IMPACT
+// ═══════════════════════════════════════════════════
+function TemplateATSImpact({ d }: { d: CvData }) {
+    const accent = "#1e40af";
+    return (
+        <div style={{ background: "#fff", fontFamily: "Arial, Helvetica, sans-serif", color: "#111", fontSize: 11.5 }}>
+            <div style={{ background: "#f8fafc", borderBottom: "3px solid " + accent, padding: "26px 48px 20px" }}>
+                <div style={{ fontSize: 23, fontWeight: 700, color: accent, marginBottom: 6 }}>{d.basicInfo?.fullName || "Your Name"}</div>
+                <div style={{ fontSize: 10.5, color: "#555", display: "flex", flexWrap: "wrap", gap: "0 16px" }}>
+                    {d.basicInfo?.phone && <span>{d.basicInfo.phone}</span>}
+                    {d.basicInfo?.email && <Lnk href={`mailto:${d.basicInfo.email}`}>{d.basicInfo.email}</Lnk>}
+                    {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
+                    {d.basicInfo?.linkedin && <Lnk href={d.basicInfo.linkedin}>{d.basicInfo.linkedin}</Lnk>}
+                    {d.basicInfo?.portfolio && <Lnk href={d.basicInfo.portfolio}>{d.basicInfo.portfolio}</Lnk>}
+                </div>
+            </div>
+            <div style={{ padding: "22px 48px" }}>
+                {d.summary && <ImpactSec title="Professional Summary" accent={accent}><p style={{ fontSize: 12, lineHeight: 1.65, color: "#444" }}>{d.summary}</p></ImpactSec>}
+                {d.experience?.some(e => e.company) && (
+                    <ImpactSec title="Work Experience" accent={accent}>
+                        {d.experience!.map((e, i) => (
+                            <div key={i} style={{ marginBottom: 14 }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" as const }}>
+                                    <span style={{ fontWeight: 700, fontSize: 13 }}>{e.role}</span>
+                                    <span style={{ fontSize: 10, color: "#777", background: "#f1f5f9", padding: "2px 8px", borderRadius: 3 }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : e.startDate ? " – Present" : ""}</span>
+                                </div>
+                                <div style={{ fontSize: 11.5, color: accent, fontWeight: 600, marginBottom: 4 }}>{e.company}</div>
+                                <div style={{ fontSize: 11, lineHeight: 1.55 }}>{bullets(e.description)}</div>
+                            </div>
+                        ))}
+                    </ImpactSec>
+                )}
+                {d.education?.some(e => e.institution) && (
+                    <ImpactSec title="Education" accent={accent}>
+                        {d.education!.map((e, i) => (
+                            <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                                <div><div style={{ fontWeight: 700, fontSize: 12 }}>{e.institution}</div><div style={{ fontSize: 11, color: "#555" }}>{e.degree}</div></div>
+                                <div style={{ fontSize: 10.5, color: "#777" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : ""}</div>
+                            </div>
+                        ))}
+                    </ImpactSec>
+                )}
+                {d.skills && d.skills.length > 0 && (
+                    <ImpactSec title="Core Skills" accent={accent}>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                            {d.skills.map((sk, i) => <span key={i} style={{ fontSize: 11, background: "#eff6ff", color: accent, padding: "3px 12px", borderRadius: 4, border: `1px solid ${accent}30` }}>{sk}</span>)}
+                        </div>
+                    </ImpactSec>
+                )}
+                {d.languages && d.languages.length > 0 && <ImpactSec title="Languages" accent={accent}><p style={{ fontSize: 11.5 }}>{d.languages.join("  ·  ")}</p></ImpactSec>}
+            </div>
+        </div>
+    );
+}
+function ImpactSec({ title, accent, children }: { title: string; accent: string; children: React.ReactNode }) {
+    return (
+        <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 2, color: accent, borderBottom: `2px solid ${accent}`, paddingBottom: 3, marginBottom: 10 }}>{title}</div>
+            {children}
+        </div>
+    );
+}
+
+// ═══════════════════════════════════════════════════
+// TEMPLATE 24: ATS FEDERAL (US Gov / USAJOBS)
+// ═══════════════════════════════════════════════════
+function TemplateATSFederal({ d }: { d: CvData }) {
+    return (
+        <div style={{ background: "#fff", fontFamily: "Arial, Helvetica, sans-serif", color: "#000", padding: "44px 56px", fontSize: 11.5, lineHeight: 1.6 }}>
+            <div style={{ textAlign: "center", marginBottom: 20 }}>
+                <div style={{ fontSize: 20, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{d.basicInfo?.fullName || "Your Name"}</div>
+                <div style={{ fontSize: 11, color: "#333", marginTop: 5 }}>{[d.basicInfo?.phone, d.basicInfo?.email, d.basicInfo?.location].filter(Boolean).join("  |  ")}</div>
+                {(d.basicInfo?.linkedin || d.basicInfo?.portfolio) && (
+                    <div style={{ fontSize: 10.5, color: "#555", marginTop: 3 }}>
+                        {[d.basicInfo?.linkedin, d.basicInfo?.portfolio].filter(Boolean).map((l, i, a) => <React.Fragment key={i}><Lnk href={l!}>{l}</Lnk>{i < a.length - 1 && "  |  "}</React.Fragment>)}
+                    </div>
+                )}
+            </div>
+            <div style={{ borderTop: "3px double #000", borderBottom: "1px solid #000", padding: "2px 0", marginBottom: 16 }} />
+            {d.summary && <FedSec title="Objective / Profile Summary"><p style={{ lineHeight: 1.7 }}>{d.summary}</p></FedSec>}
+            {d.experience?.some(e => e.company) && (
+                <FedSec title="Professional Experience">
+                    {d.experience!.map((e, i) => (
+                        <div key={i} style={{ marginBottom: 16, borderLeft: "3px solid #ddd", paddingLeft: 14 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                                <span style={{ fontWeight: 700, fontSize: 12 }}>{e.role}</span>
+                                <span style={{ fontSize: 10.5, color: "#555" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : e.startDate ? " – Present" : ""}</span>
+                            </div>
+                            <div style={{ fontSize: 11.5, fontWeight: 700, color: "#444", marginBottom: 4 }}>{e.company}</div>
+                            <div style={{ fontSize: 11, lineHeight: 1.55 }}>{bullets(e.description)}</div>
+                        </div>
+                    ))}
+                </FedSec>
+            )}
+            {d.education?.some(e => e.institution) && (
+                <FedSec title="Education">
+                    {d.education!.map((e, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                            <div><div style={{ fontWeight: 700 }}>{e.institution}</div><div style={{ fontSize: 11, color: "#444" }}>{e.degree}</div></div>
+                            <div style={{ fontSize: 10.5, color: "#555" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : ""}</div>
+                        </div>
+                    ))}
+                </FedSec>
+            )}
+            {d.skills && d.skills.length > 0 && <FedSec title="Knowledge, Skills & Abilities (KSAs)"><p style={{ fontSize: 11.5 }}>{d.skills.join("  ·  ")}</p></FedSec>}
+            {d.languages && d.languages.length > 0 && <FedSec title="Languages"><p style={{ fontSize: 11.5 }}>{d.languages.join("  ·  ")}</p></FedSec>}
+        </div>
+    );
+}
+function FedSec({ title, children }: { title: string; children: React.ReactNode }) {
+    return (
+        <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 2, background: "#f3f4f6", padding: "4px 10px", marginBottom: 10 }}>{title}</div>
+            {children}
+        </div>
+    );
+}
+
+// ═══════════════════════════════════════════════════
+// TEMPLATE 25: ATS CONSULTING
+// ═══════════════════════════════════════════════════
+function TemplateATSConsulting({ d }: { d: CvData }) {
+    const accent = "#0f4c81";
+    return (
+        <div style={{ background: "#fff", fontFamily: "Arial, Helvetica, sans-serif", color: "#111", padding: "42px 52px", fontSize: 12, lineHeight: 1.6 }}>
+            <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: -0.3 }}>{d.basicInfo?.fullName || "Your Name"}</div>
+                <div style={{ height: 3, background: accent, width: 60, marginTop: 6, marginBottom: 10 }} />
+                <div style={{ fontSize: 11, color: "#555", display: "flex", flexWrap: "wrap", gap: "0 16px" }}>
+                    {d.basicInfo?.phone && <span>{d.basicInfo.phone}</span>}
+                    {d.basicInfo?.email && <Lnk href={`mailto:${d.basicInfo.email}`}>{d.basicInfo.email}</Lnk>}
+                    {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
+                    {d.basicInfo?.linkedin && <Lnk href={d.basicInfo.linkedin}>{d.basicInfo.linkedin}</Lnk>}
+                    {d.basicInfo?.portfolio && <Lnk href={d.basicInfo.portfolio}>{d.basicInfo.portfolio}</Lnk>}
+                </div>
+            </div>
+            {d.summary && <ConsultSec title="Executive Profile" accent={accent}><p style={{ fontSize: 12, lineHeight: 1.7, color: "#333" }}>{d.summary}</p></ConsultSec>}
+            {d.experience?.some(e => e.company) && (
+                <ConsultSec title="Professional Experience" accent={accent}>
+                    {d.experience!.map((e, i) => (
+                        <div key={i} style={{ marginBottom: 16, paddingLeft: 14, borderLeft: `3px solid ${accent}` }}>
+                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                <span style={{ fontWeight: 700, fontSize: 13 }}>{e.role}</span>
+                                <span style={{ fontSize: 10.5, color: "#777" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : e.startDate ? " – Present" : ""}</span>
+                            </div>
+                            <div style={{ fontSize: 11.5, color: accent, fontStyle: "italic", marginBottom: 5 }}>{e.company}</div>
+                            <div style={{ fontSize: 11, lineHeight: 1.55 }}>{bullets(e.description)}</div>
+                        </div>
+                    ))}
+                </ConsultSec>
+            )}
+            {d.education?.some(e => e.institution) && (
+                <ConsultSec title="Education" accent={accent}>
+                    {d.education!.map((e, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                            <div><div style={{ fontWeight: 700 }}>{e.institution}</div><div style={{ fontSize: 11, color: "#555" }}>{e.degree}</div></div>
+                            <div style={{ fontSize: 10.5, color: "#777" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : ""}</div>
+                        </div>
+                    ))}
+                </ConsultSec>
+            )}
+            {d.skills && d.skills.length > 0 && <ConsultSec title="Core Competencies" accent={accent}><div style={{ columns: 2, columnGap: 24 }}>{d.skills.map((sk, i) => <div key={i} style={{ fontSize: 11.5, marginBottom: 3, breakInside: "avoid" }}>› {sk}</div>)}</div></ConsultSec>}
+            {d.languages && d.languages.length > 0 && <ConsultSec title="Languages" accent={accent}><p style={{ fontSize: 11.5 }}>{d.languages.join("  ·  ")}</p></ConsultSec>}
+        </div>
+    );
+}
+function ConsultSec({ title, accent, children }: { title: string; accent: string; children: React.ReactNode }) {
+    return (
+        <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 2.5, color: accent, paddingBottom: 4, borderBottom: `1.5px solid ${accent}`, marginBottom: 10 }}>{title}</div>
+            {children}
+        </div>
+    );
+}
+
+// ═══════════════════════════════════════════════════
+// TEMPLATE 26: ATS FINANCE
+// ═══════════════════════════════════════════════════
+function TemplateATSFinance({ d }: { d: CvData }) {
+    return (
+        <div style={{ background: "#fff", fontFamily: "'Times New Roman', Times, serif", color: "#111", padding: "44px 56px", fontSize: 12, lineHeight: 1.6 }}>
+            <div style={{ marginBottom: 16, borderBottom: "0.5px solid #aaa", paddingBottom: 14 }}>
+                <div style={{ fontSize: 22, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2 }}>{d.basicInfo?.fullName || "Your Name"}</div>
+                <div style={{ fontSize: 11, color: "#444", marginTop: 6, display: "flex", flexWrap: "wrap", gap: "0 16px" }}>
+                    {d.basicInfo?.phone && <span>{d.basicInfo.phone}</span>}
+                    {d.basicInfo?.email && <Lnk href={`mailto:${d.basicInfo.email}`}>{d.basicInfo.email}</Lnk>}
+                    {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
+                    {d.basicInfo?.linkedin && <Lnk href={d.basicInfo.linkedin}>{d.basicInfo.linkedin}</Lnk>}
+                </div>
+            </div>
+            {d.summary && <FinSec title="Profile"><p style={{ lineHeight: 1.7, textAlign: "justify" as const }}>{d.summary}</p></FinSec>}
+            {d.experience?.some(e => e.company) && (
+                <FinSec title="Professional Experience">
+                    {d.experience!.map((e, i) => (
+                        <div key={i} style={{ marginBottom: 14 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                                <span style={{ fontWeight: 700, fontSize: 12.5 }}>{e.company}</span>
+                                <span style={{ fontSize: 10.5, color: "#666", fontStyle: "italic" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : e.startDate ? " – Present" : ""}</span>
+                            </div>
+                            <div style={{ fontStyle: "italic", fontSize: 12, color: "#333", marginBottom: 4 }}>{e.role}</div>
+                            <div style={{ fontSize: 11.5, paddingLeft: 14, lineHeight: 1.6 }}>{bullets(e.description)}</div>
+                        </div>
+                    ))}
+                </FinSec>
+            )}
+            {d.education?.some(e => e.institution) && (
+                <FinSec title="Education">
+                    {d.education!.map((e, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                            <div><div style={{ fontWeight: 700, fontSize: 12.5 }}>{e.institution}</div><div style={{ fontStyle: "italic", fontSize: 11.5 }}>{e.degree}</div></div>
+                            <div style={{ fontSize: 11, color: "#666" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : ""}</div>
+                        </div>
+                    ))}
+                </FinSec>
+            )}
+            {(d.skills?.length || d.languages?.length) ? (
+                <FinSec title="Skills & Languages">
+                    {d.skills && d.skills.length > 0 && <p style={{ fontSize: 12, marginBottom: 4 }}><strong>Technical/Financial:</strong> {d.skills.join(", ")}</p>}
+                    {d.languages && d.languages.length > 0 && <p style={{ fontSize: 12 }}><strong>Languages:</strong> {d.languages.join(", ")}</p>}
+                </FinSec>
+            ) : null}
+        </div>
+    );
+}
+function FinSec({ title, children }: { title: string; children: React.ReactNode }) {
+    return (
+        <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 1.5, borderTop: "1.5px solid #000", borderBottom: "0.5px solid #000", padding: "3px 0", marginBottom: 10 }}>{title}</div>
+            {children}
+        </div>
+    );
+}
+
+// ═══════════════════════════════════════════════════
+// TEMPLATE 27: ATS MEDICAL / HEALTHCARE
+// ═══════════════════════════════════════════════════
+function TemplateATSMedical({ d }: { d: CvData }) {
+    const accent = "#0e7490";
+    return (
+        <div style={{ background: "#fff", fontFamily: "Arial, Helvetica, sans-serif", color: "#111", padding: "40px 52px", fontSize: 12, lineHeight: 1.6 }}>
+            <div style={{ borderBottom: `3px solid ${accent}`, paddingBottom: 16, marginBottom: 20 }}>
+                <div style={{ fontSize: 22, fontWeight: 700, color: accent }}>{d.basicInfo?.fullName || "Your Name"}</div>
+                <div style={{ fontSize: 11, color: "#555", marginTop: 6, display: "flex", flexWrap: "wrap", gap: "0 16px" }}>
+                    {d.basicInfo?.phone && <span>{d.basicInfo.phone}</span>}
+                    {d.basicInfo?.email && <Lnk href={`mailto:${d.basicInfo.email}`}>{d.basicInfo.email}</Lnk>}
+                    {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
+                    {d.basicInfo?.linkedin && <Lnk href={d.basicInfo.linkedin}>{d.basicInfo.linkedin}</Lnk>}
+                </div>
+            </div>
+            {d.summary && <MedSec title="Professional Summary" accent={accent}><p style={{ lineHeight: 1.7 }}>{d.summary}</p></MedSec>}
+            {d.experience?.some(e => e.company) && (
+                <MedSec title="Clinical / Professional Experience" accent={accent}>
+                    {d.experience!.map((e, i) => (
+                        <div key={i} style={{ marginBottom: 14 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                <span style={{ fontWeight: 700, fontSize: 12.5 }}>{e.role}</span>
+                                <span style={{ fontSize: 10.5, color: "#666" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : e.startDate ? " – Present" : ""}</span>
+                            </div>
+                            <div style={{ fontSize: 12, color: accent, fontWeight: 600, marginBottom: 4 }}>{e.company}</div>
+                            <div style={{ fontSize: 11.5, lineHeight: 1.55 }}>{bullets(e.description)}</div>
+                        </div>
+                    ))}
+                </MedSec>
+            )}
+            {d.education?.some(e => e.institution) && (
+                <MedSec title="Education & Credentials" accent={accent}>
+                    {d.education!.map((e, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                            <div><div style={{ fontWeight: 700, fontSize: 12.5 }}>{e.institution}</div><div style={{ fontSize: 11.5, color: "#555" }}>{e.degree}</div></div>
+                            <div style={{ fontSize: 11, color: "#666" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : ""}</div>
+                        </div>
+                    ))}
+                </MedSec>
+            )}
+            {d.skills && d.skills.length > 0 && <MedSec title="Clinical Skills & Technologies" accent={accent}><div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>{d.skills.map((sk, i) => <span key={i} style={{ fontSize: 11, background: "#ecfeff", color: accent, padding: "3px 12px", border: `1px solid ${accent}30`, borderRadius: 4 }}>{sk}</span>)}</div></MedSec>}
+            {d.languages && d.languages.length > 0 && <MedSec title="Languages" accent={accent}><p style={{ fontSize: 12 }}>{d.languages.join("  ·  ")}</p></MedSec>}
+        </div>
+    );
+}
+function MedSec({ title, accent, children }: { title: string; accent: string; children: React.ReactNode }) {
+    return (
+        <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 2, color: accent, borderBottom: `1.5px solid ${accent}40`, paddingBottom: 4, marginBottom: 10 }}>{title}</div>
+            {children}
+        </div>
+    );
+}
+
+// ═══════════════════════════════════════════════════
+// TEMPLATE 28: ATS IT / ENGINEERING
+// ═══════════════════════════════════════════════════
+function TemplateATSIT({ d }: { d: CvData }) {
+    return (
+        <div style={{ background: "#fff", fontFamily: "'Courier New', Courier, monospace", color: "#111", padding: "38px 50px", fontSize: 11.5, lineHeight: 1.55 }}>
+            <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.5 }}>{d.basicInfo?.fullName || "Your Name"}</div>
+                <div style={{ fontSize: 10.5, color: "#555", marginTop: 5, display: "flex", flexWrap: "wrap", gap: "0 12px" }}>
+                    {d.basicInfo?.phone && <span>{d.basicInfo.phone}</span>}
+                    {d.basicInfo?.email && <Lnk href={`mailto:${d.basicInfo.email}`}>{d.basicInfo.email}</Lnk>}
+                    {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
+                    {d.basicInfo?.linkedin && <Lnk href={d.basicInfo.linkedin}>{d.basicInfo.linkedin}</Lnk>}
+                    {d.basicInfo?.portfolio && <Lnk href={d.basicInfo.portfolio}>{d.basicInfo.portfolio}</Lnk>}
+                </div>
+            </div>
+            {d.skills && d.skills.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 3, color: "#111", borderBottom: "2px solid #111", paddingBottom: 2, marginBottom: 8 }}>// TECHNICAL SKILLS</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{d.skills.map((sk, i) => <span key={i} style={{ fontSize: 11, background: "#f3f4f6", color: "#111", padding: "2px 10px", border: "1px solid #d1d5db", borderRadius: 3 }}>{sk}</span>)}</div>
+                </div>
+            )}
+            {d.summary && <><div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 3, color: "#111", borderBottom: "2px solid #111", paddingBottom: 2, marginBottom: 8 }}>// SUMMARY</div><p style={{ fontSize: 11.5, lineHeight: 1.65, marginBottom: 16 }}>{d.summary}</p></>}
+            {d.experience?.some(e => e.company) && <>
+                <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 3, color: "#111", borderBottom: "2px solid #111", paddingBottom: 2, marginBottom: 10 }}>// EXPERIENCE</div>
+                {d.experience!.map((e, i) => (
+                    <div key={i} style={{ marginBottom: 14 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between" }}>
+                            <span style={{ fontWeight: 700, fontSize: 12 }}>{e.role}</span>
+                            <span style={{ fontSize: 10.5, color: "#888" }}>{fmtDate(e.startDate)}{e.endDate ? `–${fmtDate(e.endDate)}` : e.startDate ? "–present" : ""}</span>
+                        </div>
+                        <div style={{ fontSize: 11, color: "#555", marginBottom: 4 }}>{e.company}</div>
+                        <div style={{ fontSize: 11, lineHeight: 1.55 }}>{bullets(e.description)}</div>
+                    </div>
+                ))}
+            </>}
+            {d.education?.some(e => e.institution) && <>
+                <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 3, color: "#111", borderBottom: "2px solid #111", paddingBottom: 2, marginBottom: 10 }}>// EDUCATION</div>
+                {d.education!.map((e, i) => <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 7 }}><div><div style={{ fontWeight: 700 }}>{e.institution}</div><div style={{ fontSize: 11, color: "#555" }}>{e.degree}</div></div><span style={{ fontSize: 10.5, color: "#888" }}>{fmtDate(e.startDate)}{e.endDate ? `–${fmtDate(e.endDate)}` : ""}</span></div>)}
+            </>}
+            {d.languages && d.languages.length > 0 && <><div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 3, color: "#111", borderBottom: "2px solid #111", paddingBottom: 2, marginBottom: 8, marginTop: 14 }}>// LANGUAGES</div><p style={{ fontSize: 11.5 }}>{d.languages.join("  |  ")}</p></>}
+        </div>
+    );
+}
+
+// ═══════════════════════════════════════════════════
+// TEMPLATE 29: ATS LEGAL
+// ═══════════════════════════════════════════════════
+function TemplateATSLegal({ d }: { d: CvData }) {
+    return (
+        <div style={{ background: "#fff", fontFamily: "'Times New Roman', Times, serif", color: "#000", padding: "50px 62px", fontSize: 12, lineHeight: 1.65 }}>
+            <div style={{ textAlign: "center", marginBottom: 18 }}>
+                <div style={{ fontSize: 20, fontWeight: 700, textTransform: "uppercase", letterSpacing: 3 }}>{d.basicInfo?.fullName || "Your Name"}</div>
+                <div style={{ fontSize: 11, color: "#333", marginTop: 5 }}>{[d.basicInfo?.phone, d.basicInfo?.email, d.basicInfo?.location].filter(Boolean).join("   |   ")}</div>
+                {(d.basicInfo?.linkedin || d.basicInfo?.portfolio) && (
+                    <div style={{ fontSize: 11, color: "#555", marginTop: 3 }}>
+                        {[d.basicInfo?.linkedin, d.basicInfo?.portfolio].filter(Boolean).map((l, i, a) => <React.Fragment key={i}><Lnk href={l!}>{l}</Lnk>{i < a.length - 1 && "   |   "}</React.Fragment>)}
+                    </div>
+                )}
+                <div style={{ margin: "12px auto 0", borderTop: "2px solid #000", borderBottom: "0.5px solid #000", paddingBottom: 4 }} />
+            </div>
+            {d.summary && <LegalSec num="I." title="Professional Summary"><p style={{ textAlign: "justify" as const, lineHeight: 1.75 }}>{d.summary}</p></LegalSec>}
+            {d.experience?.some(e => e.company) && (
+                <LegalSec num="II." title="Professional Experience">
+                    {d.experience!.map((e, i) => (
+                        <div key={i} style={{ marginBottom: 14 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                <span style={{ fontWeight: 700, fontSize: 12.5 }}>{e.role}</span>
+                                <span style={{ fontSize: 11, fontStyle: "italic" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : e.startDate ? " – Present" : ""}</span>
+                            </div>
+                            <div style={{ fontStyle: "italic", fontSize: 12, marginBottom: 5 }}>{e.company}</div>
+                            <div style={{ fontSize: 12, paddingLeft: 16, lineHeight: 1.7 }}>{bullets(e.description)}</div>
+                        </div>
+                    ))}
+                </LegalSec>
+            )}
+            {d.education?.some(e => e.institution) && (
+                <LegalSec num="III." title="Education">
+                    {d.education!.map((e, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                            <div><div style={{ fontWeight: 700, fontSize: 12.5 }}>{e.institution}</div><div style={{ fontStyle: "italic", fontSize: 12 }}>{e.degree}</div></div>
+                            <div style={{ fontSize: 11 }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : ""}</div>
+                        </div>
+                    ))}
+                </LegalSec>
+            )}
+            {(d.skills?.length || d.languages?.length) ? (
+                <LegalSec num="IV." title="Skills & Languages">
+                    {d.skills && d.skills.length > 0 && <p style={{ fontSize: 12, marginBottom: 5 }}><strong>Practice Areas / Skills:</strong> {d.skills.join(", ")}</p>}
+                    {d.languages && d.languages.length > 0 && <p style={{ fontSize: 12 }}><strong>Languages:</strong> {d.languages.join(", ")}</p>}
+                </LegalSec>
+            ) : null}
+        </div>
+    );
+}
+function LegalSec({ num, title, children }: { num: string; title: string; children: React.ReactNode }) {
+    return (
+        <div style={{ marginBottom: 20 }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "baseline", marginBottom: 8 }}>
+                <span style={{ fontSize: 10.5, fontWeight: 700, fontFamily: "Times New Roman", minWidth: 24 }}>{num}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 1.5, borderBottom: "0.75px solid #333", flex: 1, paddingBottom: 2 }}>{title}</span>
+            </div>
+            <div style={{ paddingLeft: 28 }}>{children}</div>
+        </div>
+    );
+}
+
+// ═══════════════════════════════════════════════════
+// TEMPLATE 30: ATS SALES / BD
+// ═══════════════════════════════════════════════════
+function TemplateATSSales({ d }: { d: CvData }) {
+    const accent = "#16a34a";
+    return (
+        <div style={{ background: "#fff", fontFamily: "Arial, Helvetica, sans-serif", color: "#111", padding: "40px 52px", fontSize: 12, lineHeight: 1.55 }}>
+            <div style={{ marginBottom: 18 }}>
+                <div style={{ fontSize: 22, fontWeight: 700 }}>{d.basicInfo?.fullName || "Your Name"}</div>
+                <div style={{ height: 2, background: accent, width: "100%", marginTop: 4, marginBottom: 8 }} />
+                <div style={{ fontSize: 11, color: "#444", display: "flex", flexWrap: "wrap", gap: "0 14px" }}>
+                    {d.basicInfo?.phone && <span>{d.basicInfo.phone}</span>}
+                    {d.basicInfo?.email && <Lnk href={`mailto:${d.basicInfo.email}`}>{d.basicInfo.email}</Lnk>}
+                    {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
+                    {d.basicInfo?.linkedin && <Lnk href={d.basicInfo.linkedin}>{d.basicInfo.linkedin}</Lnk>}
+                </div>
+            </div>
+            {d.summary && <SalesSec title="Value Proposition" accent={accent}><p style={{ fontSize: 12.5, lineHeight: 1.7 }}>{d.summary}</p></SalesSec>}
+            {d.experience?.some(e => e.company) && (
+                <SalesSec title="Sales Experience & Achievements" accent={accent}>
+                    {d.experience!.map((e, i) => (
+                        <div key={i} style={{ marginBottom: 14 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                <span style={{ fontWeight: 700, fontSize: 13 }}>{e.role}</span>
+                                <span style={{ fontSize: 10.5, color: "#777" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : e.startDate ? " – Present" : ""}</span>
+                            </div>
+                            <div style={{ fontSize: 12, color: accent, fontWeight: 600, marginBottom: 5 }}>{e.company}</div>
+                            <div style={{ fontSize: 11.5, lineHeight: 1.55 }}>{bullets(e.description)}</div>
+                        </div>
+                    ))}
+                </SalesSec>
+            )}
+            {d.education?.some(e => e.institution) && (
+                <SalesSec title="Education" accent={accent}>
+                    {d.education!.map((e, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                            <div><div style={{ fontWeight: 700 }}>{e.institution}</div><div style={{ fontSize: 11, color: "#555" }}>{e.degree}</div></div>
+                            <div style={{ fontSize: 10.5, color: "#777" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : ""}</div>
+                        </div>
+                    ))}
+                </SalesSec>
+            )}
+            {d.skills && d.skills.length > 0 && <SalesSec title="Tools & Skills" accent={accent}><div style={{ columns: 2, columnGap: 24 }}>{d.skills.map((sk, i) => <div key={i} style={{ fontSize: 11.5, marginBottom: 3, breakInside: "avoid" }}>▸ {sk}</div>)}</div></SalesSec>}
+            {d.languages && d.languages.length > 0 && <SalesSec title="Languages" accent={accent}><p style={{ fontSize: 12 }}>{d.languages.join("  ·  ")}</p></SalesSec>}
+        </div>
+    );
+}
+function SalesSec({ title, accent, children }: { title: string; accent: string; children: React.ReactNode }) {
+    return (
+        <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 2, color: "#fff", background: accent, padding: "3px 10px", marginBottom: 10, display: "inline-block" }}>{title}</div>
+            {children}
+        </div>
+    );
+}
+
+// ═══════════════════════════════════════════════════
+// TEMPLATE 31: ATS STEM / RESEARCH
+// ═══════════════════════════════════════════════════
+function TemplateATSSTEM({ d }: { d: CvData }) {
+    return (
+        <div style={{ background: "#fff", fontFamily: "'Times New Roman', Times, serif", color: "#000", padding: "46px 60px", fontSize: 11.5, lineHeight: 1.65 }}>
+            <div style={{ textAlign: "center", marginBottom: 20 }}>
+                <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: 0.5 }}>{d.basicInfo?.fullName || "Your Name"}</div>
+                <div style={{ fontSize: 11, color: "#333", marginTop: 6 }}>{[d.basicInfo?.phone, d.basicInfo?.email, d.basicInfo?.location].filter(Boolean).join("  ·  ")}</div>
+                {(d.basicInfo?.linkedin || d.basicInfo?.portfolio) && (
+                    <div style={{ fontSize: 11, color: "#555", marginTop: 3 }}>
+                        {[d.basicInfo?.linkedin, d.basicInfo?.portfolio].filter(Boolean).map((l, i, a) => <React.Fragment key={i}><Lnk href={l!}>{l}</Lnk>{i < a.length - 1 && "  ·  "}</React.Fragment>)}
+                    </div>
+                )}
+                <div style={{ border: "none", borderBottom: "1px solid #000", marginTop: 10 }} />
+            </div>
+            {d.summary && <STEMSec title="Research Interests / Summary"><p style={{ textAlign: "justify" as const, lineHeight: 1.75 }}>{d.summary}</p></STEMSec>}
+            {d.education?.some(e => e.institution) && (
+                <STEMSec title="Education">
+                    {d.education!.map((e, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                            <div><div style={{ fontWeight: 700, fontSize: 12.5 }}>{e.institution}</div><div style={{ fontStyle: "italic" }}>{e.degree}</div></div>
+                            <div style={{ fontSize: 11 }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : ""}</div>
+                        </div>
+                    ))}
+                </STEMSec>
+            )}
+            {d.experience?.some(e => e.company) && (
+                <STEMSec title="Research & Professional Experience">
+                    {d.experience!.map((e, i) => (
+                        <div key={i} style={{ marginBottom: 14 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                <span style={{ fontWeight: 700 }}>{e.role}</span>
+                                <span style={{ fontSize: 11, fontStyle: "italic" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : e.startDate ? " – Present" : ""}</span>
+                            </div>
+                            <div style={{ fontStyle: "italic", color: "#333", marginBottom: 4 }}>{e.company}</div>
+                            <div style={{ paddingLeft: 16, lineHeight: 1.65 }}>{bullets(e.description)}</div>
+                        </div>
+                    ))}
+                </STEMSec>
+            )}
+            {d.skills && d.skills.length > 0 && <STEMSec title="Technical Skills & Methods"><p style={{ fontSize: 12 }}>{d.skills.join("  ·  ")}</p></STEMSec>}
+            {d.languages && d.languages.length > 0 && <STEMSec title="Languages"><p style={{ fontSize: 12 }}>{d.languages.join("  ·  ")}</p></STEMSec>}
+        </div>
+    );
+}
+function STEMSec({ title, children }: { title: string; children: React.ReactNode }) {
+    return (
+        <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 1.5, marginBottom: 8, borderBottom: "0.75px solid #555", paddingBottom: 2 }}>{title}</div>
+            {children}
+        </div>
+    );
+}
+
+// ═══════════════════════════════════════════════════
+// TEMPLATE 32: ATS CORPORATE BLUE
+// ═══════════════════════════════════════════════════
+function TemplateATSCorporate({ d }: { d: CvData }) {
+    const accent = "#1e3a5f";
+    return (
+        <div style={{ background: "#fff", fontFamily: "Arial, Helvetica, sans-serif", color: "#111", fontSize: 12 }}>
+            <div style={{ background: accent, color: "#fff", padding: "28px 50px 22px" }}>
+                <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: 0.5 }}>{d.basicInfo?.fullName || "Your Name"}</div>
+                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 8, display: "flex", flexWrap: "wrap", gap: "0 18px" }}>
+                    {d.basicInfo?.phone && <span>{d.basicInfo.phone}</span>}
+                    {d.basicInfo?.email && <span>{d.basicInfo.email}</span>}
+                    {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
+                    {d.basicInfo?.linkedin && <Lnk href={d.basicInfo.linkedin} style={{ color: "#94a3b8" }}>{d.basicInfo.linkedin}</Lnk>}
+                </div>
+            </div>
+            <div style={{ padding: "26px 50px" }}>
+                {d.summary && <CorpSec title="Professional Summary" accent={accent}><p style={{ fontSize: 12.5, lineHeight: 1.7 }}>{d.summary}</p></CorpSec>}
+                {d.experience?.some(e => e.company) && (
+                    <CorpSec title="Work Experience" accent={accent}>
+                        {d.experience!.map((e, i) => (
+                            <div key={i} style={{ marginBottom: 14 }}>
+                                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                    <span style={{ fontWeight: 700, fontSize: 13 }}>{e.role}</span>
+                                    <span style={{ fontSize: 10.5, color: "#6b7280" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : e.startDate ? " – Present" : ""}</span>
+                                </div>
+                                <div style={{ fontSize: 12, color: accent, fontWeight: 600, marginBottom: 5 }}>{e.company}</div>
+                                <div style={{ fontSize: 11.5, lineHeight: 1.55 }}>{bullets(e.description)}</div>
+                            </div>
+                        ))}
+                    </CorpSec>
+                )}
+                {d.education?.some(e => e.institution) && (
+                    <CorpSec title="Education" accent={accent}>
+                        {d.education!.map((e, i) => (
+                            <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                                <div><div style={{ fontWeight: 700, fontSize: 13 }}>{e.institution}</div><div style={{ fontSize: 11.5, color: "#555" }}>{e.degree}</div></div>
+                                <div style={{ fontSize: 11, color: "#6b7280" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : ""}</div>
+                            </div>
+                        ))}
+                    </CorpSec>
+                )}
+                {(d.skills?.length || d.languages?.length) ? (
+                    <CorpSec title="Skills & Languages" accent={accent}>
+                        {d.skills && d.skills.length > 0 && <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 10 }}>{d.skills.map((sk, i) => <span key={i} style={{ fontSize: 11.5, background: "#f0f4f8", color: accent, padding: "4px 12px", borderRadius: 4, border: `1px solid ${accent}30` }}>{sk}</span>)}</div>}
+                        {d.languages && d.languages.length > 0 && <p style={{ fontSize: 12 }}><strong>Languages:</strong> {d.languages.join(", ")}</p>}
+                    </CorpSec>
+                ) : null}
+            </div>
+        </div>
+    );
+}
+function CorpSec({ title, accent, children }: { title: string; accent: string; children: React.ReactNode }) {
+    return (
+        <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 2, color: accent, borderLeft: `4px solid ${accent}`, paddingLeft: 10, marginBottom: 10, lineHeight: 1 }}>{title}</div>
+            {children}
+        </div>
+    );
+}
+
+// ═══════════════════════════════════════════════════
+// TEMPLATE 33: ATS EXECUTIVE PRO
+// ═══════════════════════════════════════════════════
+function TemplateATSExecPro({ d }: { d: CvData }) {
+    return (
+        <div style={{ background: "#fff", fontFamily: "Georgia, 'Times New Roman', serif", color: "#000", padding: "52px 62px", fontSize: 12.5, lineHeight: 1.65 }}>
+            <div style={{ borderBottom: "2px solid #000", paddingBottom: 16, marginBottom: 20 }}>
+                <div style={{ fontSize: 30, fontWeight: 700, letterSpacing: -0.5 }}>{d.basicInfo?.fullName || "Your Name"}</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 22px", fontSize: 12, color: "#555", marginTop: 8 }}>
+                    {d.basicInfo?.phone && <span>{d.basicInfo.phone}</span>}
+                    {d.basicInfo?.email && <Lnk href={`mailto:${d.basicInfo.email}`}>{d.basicInfo.email}</Lnk>}
+                    {d.basicInfo?.location && <span>{d.basicInfo.location}</span>}
+                    {d.basicInfo?.linkedin && <Lnk href={d.basicInfo.linkedin}>{d.basicInfo.linkedin}</Lnk>}
+                </div>
+            </div>
+            {d.summary && <><div style={{ fontStyle: "italic", fontSize: 13, lineHeight: 1.75, marginBottom: 22, paddingLeft: 20, borderLeft: "3px solid #000", color: "#333" }}>{d.summary}</div></>}
+            {d.experience?.some(e => e.company) && (
+                <ExecProSec title="Executive Experience">
+                    {d.experience!.map((e, i) => (
+                        <div key={i} style={{ marginBottom: 18 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                                <span style={{ fontWeight: 700, fontSize: 14 }}>{e.role}</span>
+                                <span style={{ fontSize: 11, color: "#888" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : e.startDate ? " – Present" : ""}</span>
+                            </div>
+                            <div style={{ fontSize: 12.5, fontStyle: "italic", color: "#444", marginBottom: 6 }}>{e.company}</div>
+                            <div style={{ fontSize: 12, lineHeight: 1.65, paddingLeft: 16 }}>{bullets(e.description)}</div>
+                        </div>
+                    ))}
+                </ExecProSec>
+            )}
+            {d.education?.some(e => e.institution) && (
+                <ExecProSec title="Education">
+                    {d.education!.map((e, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                            <div><div style={{ fontWeight: 700, fontSize: 14 }}>{e.institution}</div><div style={{ fontStyle: "italic", fontSize: 12 }}>{e.degree}</div></div>
+                            <span style={{ fontSize: 11, color: "#888" }}>{fmtDate(e.startDate)}{e.endDate ? ` – ${fmtDate(e.endDate)}` : ""}</span>
+                        </div>
+                    ))}
+                </ExecProSec>
+            )}
+            {(d.skills?.length || d.languages?.length) ? (
+                <ExecProSec title="Leadership Skills & Languages">
+                    {d.skills && d.skills.length > 0 && <p style={{ fontSize: 12.5, marginBottom: 4 }}><strong>Competencies:</strong> {d.skills.join("  ·  ")}</p>}
+                    {d.languages && d.languages.length > 0 && <p style={{ fontSize: 12.5 }}><strong>Languages:</strong> {d.languages.join("  ·  ")}</p>}
+                </ExecProSec>
+            ) : null}
+        </div>
+    );
+}
+function ExecProSec({ title, children }: { title: string; children: React.ReactNode }) {
+    return (
+        <div style={{ marginBottom: 22 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 2.5, marginBottom: 4 }}>{title}</div>
+            <div style={{ height: 0.75, background: "#000", marginBottom: 12 }} />
+            {children}
         </div>
     );
 }
@@ -1055,6 +1830,19 @@ export function CvTemplateRenderer({
         case "forest": template = <TemplateForest d={data} />; break;
         case "copper": template = <TemplateCopper d={data} />; break;
         case "slate": template = <TemplateSlate d={data} />; break;
+        case "ats-pro": template = <TemplateATSPro d={data} />; break;
+        case "ats-harvard": template = <TemplateATSHarvard d={data} />; break;
+        case "ats-impact": template = <TemplateATSImpact d={data} />; break;
+        case "ats-federal": template = <TemplateATSFederal d={data} />; break;
+        case "ats-consult": template = <TemplateATSConsulting d={data} />; break;
+        case "ats-finance": template = <TemplateATSFinance d={data} />; break;
+        case "ats-medical": template = <TemplateATSMedical d={data} />; break;
+        case "ats-it": template = <TemplateATSIT d={data} />; break;
+        case "ats-legal": template = <TemplateATSLegal d={data} />; break;
+        case "ats-sales": template = <TemplateATSSales d={data} />; break;
+        case "ats-stem": template = <TemplateATSSTEM d={data} />; break;
+        case "ats-corporate": template = <TemplateATSCorporate d={data} />; break;
+        case "ats-exec-pro": template = <TemplateATSExecPro d={data} />; break;
         default: template = <TemplateClassic d={data} />;
     }
 
@@ -1063,27 +1851,17 @@ export function CvTemplateRenderer({
             {template}
             {!isPaidUser && (
                 <div style={{
-                    position: "absolute", inset: 0, pointerEvents: "none",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    overflow: "hidden",
+                    position: "absolute", bottom: 12, right: 12,
+                    pointerEvents: "none", userSelect: "none"
                 }}>
-                    {/* Single large diagonal logo watermark */}
-                    <div style={{ transform: "rotate(-30deg)", userSelect: "none", opacity: 0.12 }}>
-                        <svg viewBox="0 0 100 100" fill="none" width="340" height="340">
-                            {/* C arc */}
-                            <path
-                                d="M52 10C28 10 10 28 10 50C10 72 28 90 52 90C63 90 72 85 77 78"
-                                stroke="#6366f1" strokeWidth="6" strokeLinecap="round" fill="none"
-                            />
-                            {/* V shape */}
-                            <path
-                                d="M62 12L80 78L98 12"
-                                stroke="#6366f1" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" fill="none"
-                            />
-                            {/* AI dot */}
-                            <circle cx="93" cy="6" r="9" fill="#f59e0b" />
-                            <circle cx="93" cy="6" r="4" fill="white" opacity="0.7" />
-                        </svg>
+                    {/* Text watermark — bottom right corner */}
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                        <span style={{ fontWeight: 900, fontSize: "20px", color: "#15254A", opacity: 0.5 }}>
+                            Nexora <span style={{ color: "#35848A" }}>AI</span>
+                        </span>
+                        <span style={{ fontSize: "9px", fontWeight: 600, letterSpacing: "1px", color: "#15254A", opacity: 0.5, textTransform: "uppercase" }}>
+                            AI Resume Optimizer
+                        </span>
                     </div>
                 </div>
             )}

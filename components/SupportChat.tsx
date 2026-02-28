@@ -25,7 +25,7 @@ interface Notification {
 }
 
 const QUICK_QUESTIONS = [
-    { label: "Pricing & Plans", icon: "💳", key: "price", message: "What are the CViq pricing plans? What's included in Free vs Pro?" },
+    { label: "Pricing & Plans", icon: "💳", key: "price", message: "What are the Nexora pricing plans? What's included in Free vs Pro?" },
     { label: "ATS Score Help", icon: "📊", key: "ats", message: "How does the ATS score work and how can I improve my ATS score?" },
     { label: "CV Tips", icon: "📄", key: "cv", message: "What are the best tips for writing a strong CV that gets noticed?" },
     { label: "Account & Billing", icon: "💰", key: "paid", message: "I have a question about my account or billing." },
@@ -403,7 +403,7 @@ export function SupportChat() {
                             {hasHumanAgent ? <Shield className="w-4 h-4 text-white" /> : mode === "ai" ? <Sparkles className="w-4 h-4 text-white" /> : <MessageSquare className="w-4 h-4 text-white" />}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-white">CViq Support</p>
+                            <p className="text-sm font-bold text-white">Nexora Support</p>
                             <p className="text-[11px] text-indigo-200">
                                 {hasHumanAgent ? " Human agent connected" : mode === "ai" ? " AI assistant" : mode === "human" ? " Waiting for human agent" : "Choose how to get help"}
                             </p>
@@ -528,7 +528,7 @@ export function SupportChat() {
                                             onMouseLeave={() => setHoveredMsg(null)}>
                                             <div className={`flex items-center gap-1 mb-0.5 text-[10px] font-bold ${m.sender === "user" ? "flex-row-reverse text-neutral-400" : "text-neutral-500 dark:text-gray-500"}`}>
                                                 {m.sender === "user" ? <User className="w-3 h-3" /> : m.sender === "ai" ? <Bot className="w-3 h-3 text-indigo-500" /> : <Shield className="w-3 h-3 text-green-500" />}
-                                                <span>{m.sender === "ai" ? "CViq AI" : m.sender === "admin" ? "Support Team" : "You"}</span>
+                                                <span>{m.sender === "ai" ? "Nexora AI" : m.sender === "admin" ? "Support Team" : "You"}</span>
                                                 <span className="opacity-50">{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                                             </div>
                                             <div className={`w-full flex items-end gap-1.5 ${m.sender === "user" ? "justify-end" : "justify-start"}`}>
@@ -559,7 +559,7 @@ export function SupportChat() {
                                             <div className="bg-white dark:bg-gray-800 border border-neutral-200 dark:border-gray-700 rounded-2xl rounded-bl-sm px-3 py-2 flex gap-1">
                                                 {[0, 150, 300].map(d => <span key={d} className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: `${d}ms` }} />)}
                                             </div>
-                                            <span className="text-[10px] text-neutral-400">CViq AI thinking…</span>
+                                            <span className="text-[10px] text-neutral-400">Nexora AI thinking…</span>
                                         </div>
                                     )}
 

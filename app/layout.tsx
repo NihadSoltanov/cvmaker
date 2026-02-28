@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { LangProvider } from '@/lib/langContext';
 
 export const metadata: Metadata = {
-  title: 'CViq | AI Career Platform',
-  description: 'Optimize your CV, ace interviews, and land your dream job using CViq — the AI-powered career intelligence platform.'
+  title: 'Nexora | AI Career Platform',
+  description: 'Optimize your CV, ace interviews, and land your dream job using Nexora — the AI-powered career intelligence platform.'
 };
 
 export default function RootLayout({
@@ -14,7 +15,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased min-h-screen flex flex-col">
-        {children}
+        <LangProvider>
+          {children}
+        </LangProvider>
       </body>
     </html>
   );

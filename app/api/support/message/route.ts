@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
-const CVIQ_SYSTEM_PROMPT = `You are the friendly, knowledgeable support AI for CViq — an AI-powered CV optimization platform.
+const NEXORA_SYSTEM_PROMPT = `You are the friendly, knowledgeable support AI for Nexora â€” an AI-powered CV optimization platform.
 
-ABOUT CVIQ:
-CViq helps job seekers create ATS-optimized CVs tailored to specific job descriptions. Key features:
-- My CV (Resume Editor): Users fill in their master CV — personal info, work experience, education, skills, languages, projects. This is saved and reused for every application.
-- Tailor Application (Optimize): Users paste a job description and CViq's AI rewrites their CV, improving ATS keyword alignment. Generates a tailored CV, cover letter, motivation letter, LinkedIn messages, and application email.
+ABOUT NEXORA:
+Nexora helps job seekers create ATS-optimized CVs tailored to specific job descriptions. Key features:
+- My CV (Resume Editor): Users fill in their master CV â€” personal info, work experience, education, skills, languages, projects. This is saved and reused for every application.
+- Tailor Application (Optimize): Users paste a job description and Nexora's AI rewrites their CV, improving ATS keyword alignment. Generates a tailored CV, cover letter, motivation letter, LinkedIn messages, and application email.
 - ATS Score: Each optimization shows an ATS match score (0-100) with a detailed explanation of what matched and what is missing.
 - History: Users can view all previous optimizations and re-download PDFs.
 - AI Career Coach: A conversational AI coach for interview prep, career advice, salary negotiation, and job search strategy.
@@ -20,7 +20,7 @@ PRICING:
 - Pro is a monthly or annual subscription via Stripe. After payment, access is instant.
 
 HOW TO USE (step by step):
-1. Sign up / Log in at cviq.app
+1. Sign up / Log in at nexora.app
 2. Go to "My CV" and fill in your full resume details
 3. Go to "Tailor Application", paste the job description, click Optimize
 4. Review the ATS score and tailored outputs (CV, cover letter, etc.)
@@ -40,8 +40,8 @@ YOUR BEHAVIOR:
 - Be warm, concise, and helpful. Maximum 3-4 sentences per response unless explaining a multi-step process.
 - Always answer in the SAME LANGUAGE the user writes in (Azerbaijani, Turkish, Russian, or English).
 - If you do not know the answer or it is account-specific (payment issues, data loss, bugs), say so clearly and recommend connecting to human support.
-- Never make up facts about CViq.
-- Do NOT include a Connect to Support footer — the UI handles that separately.
+- Never make up facts about Nexora.
+- Do NOT include a Connect to Support footer â€” the UI handles that separately.
 - Do NOT repeat the user's question back to them.
 - Keep responses concise and actionable.`;
 
@@ -50,7 +50,7 @@ async function callNvidiaAI(userMessage: string, history: { role: string; conten
     if (!apiKey) throw new Error("NVIDIA_API_KEY not set");
 
     const messages = [
-        { role: "system", content: CVIQ_SYSTEM_PROMPT },
+        { role: "system", content: NEXORA_SYSTEM_PROMPT },
         ...history.slice(-6),
         { role: "user", content: userMessage },
     ];
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
 
     const chatMode = mode === "human" ? "human" : "ai";
 
-    // Insert user message — chat_mode=ai means admin inbox ignores it
+    // Insert user message â€” chat_mode=ai means admin inbox ignores it
     const { error: insertError } = await supabaseAdmin.from("support_messages").insert({
         user_id: user.id,
         sender: "user",

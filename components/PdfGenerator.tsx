@@ -2,7 +2,7 @@
 
 import React from "react";
 import {
-    Document, Page, Text, View, StyleSheet, Font, Svg, Path, Circle,
+    Document, Page, Text, View, StyleSheet, Font, Svg, Path, Link,
 } from "@react-pdf/renderer";
 import type { CvData } from "./CvTemplates";
 
@@ -25,21 +25,29 @@ function fmtDate(d?: string) {
     return d;
 }
 
+// Ensure URL has proper protocol for PDF links
+function ensureHttps(url: string): string {
+    if (!url) return url;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return `https://${url}`;
+}
+
 // ──────────────────────────────────────────────
 // CLASSIC ATS PDF (B&W, single column, high ATS)
 // ──────────────────────────────────────────────
 const classicStyles = StyleSheet.create({
-    page: { fontFamily: "Times-Roman", fontSize: 10.5, color: "#111", padding: "48 56", lineHeight: 1.5, backgroundColor: "#fff" },
-    name: { fontSize: 22, fontFamily: "Times-Bold", textAlign: "center", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 },
-    contactRow: { textAlign: "center", fontSize: 9.5, color: "#333", marginBottom: 2 },
-    divider: { borderBottom: "1.5pt solid #000", marginTop: 6, marginBottom: 10 },
-    sectionTitle: { fontFamily: "Times-Bold", fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, borderBottom: "0.75pt solid #000", paddingBottom: 2, marginBottom: 6, marginTop: 12 },
-    expRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 1 },
-    expRole: { fontFamily: "Times-Bold", fontSize: 10.5 },
-    expDates: { fontSize: 9.5, color: "#444" },
-    expCompany: { fontFamily: "Times-Italic", fontSize: 10, marginBottom: 3, color: "#333" },
-    bullet: { fontSize: 10, marginBottom: 1.5, paddingLeft: 8 },
-    skillsRow: { fontSize: 10, marginBottom: 2 },
+    page: { fontFamily: "Times-Roman", fontSize: 10.5, color: "#1a1a1a", padding: "40 50", lineHeight: 1.6, backgroundColor: "#fff" },
+    name: { fontSize: 20, fontFamily: "Times-Bold", textAlign: "center", letterSpacing: 2, textTransform: "uppercase", marginBottom: 5, color: "#000" },
+    contactRow: { textAlign: "center", fontSize: 9, color: "#444", marginBottom: 2 },
+    contactLink: { color: "#1a1a1a", textDecoration: "none" },
+    divider: { borderBottom: "1pt solid #222", marginTop: 8, marginBottom: 12 },
+    sectionTitle: { fontFamily: "Times-Bold", fontSize: 11, textTransform: "uppercase", letterSpacing: 2, borderBottom: "1pt solid #222", paddingBottom: 3, marginBottom: 8, marginTop: 14, color: "#000" },
+    expRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 2 },
+    expRole: { fontFamily: "Times-Bold", fontSize: 11, color: "#000" },
+    expDates: { fontSize: 9, color: "#555", fontFamily: "Times-Italic" },
+    expCompany: { fontFamily: "Times-Italic", fontSize: 10, marginBottom: 4, color: "#333" },
+    bullet: { fontSize: 10, marginBottom: 2, paddingLeft: 10, lineHeight: 1.6 },
+    skillsRow: { fontSize: 10, marginBottom: 3, lineHeight: 1.5 },
 });
 
 function ClassicPDF({ d, watermark = false }: { d: CvData; watermark?: boolean }) {
@@ -60,8 +68,38 @@ function ClassicPDF({ d, watermark = false }: { d: CvData; watermark?: boolean }
             <Page size="A4" style={classicStyles.page}>
                 {watermark && <WatermarkLayer />}
                 <Text style={classicStyles.name}>{d.basicInfo?.fullName || "Your Name"}</Text>
-                {contacts.length > 0 && <Text style={classicStyles.contactRow}>{contacts.join("  •  ")}</Text>}
-                {links.length > 0 && <Text style={classicStyles.contactRow}>{links.join("  •  ")}</Text>}
+                {contacts.length > 0 && (
+                    <View style={{ flexDirection: "row", justifyContent: "center", marginBottom: 2 }}>
+                        {d.basicInfo?.phone && (
+                            <Link src={`tel:${d.basicInfo.phone}`} style={classicStyles.contactLink}>
+                                <Text style={classicStyles.contactRow}>{d.basicInfo.phone}</Text>
+                            </Link>
+                        )}
+                        {d.basicInfo?.phone && d.basicInfo?.email && <Text style={classicStyles.contactRow}>  •  </Text>}
+                        {d.basicInfo?.email && (
+                            <Link src={`mailto:${d.basicInfo.email}`} style={classicStyles.contactLink}>
+                                <Text style={classicStyles.contactRow}>{d.basicInfo.email}</Text>
+                            </Link>
+                        )}
+                        {d.basicInfo?.location && (d.basicInfo?.email || d.basicInfo?.phone) && <Text style={classicStyles.contactRow}>  •  </Text>}
+                        {d.basicInfo?.location && <Text style={classicStyles.contactRow}>{d.basicInfo.location}</Text>}
+                    </View>
+                )}
+                {links.length > 0 && (
+                    <View style={{ flexDirection: "row", justifyContent: "center", marginBottom: 2 }}>
+                        {d.basicInfo?.linkedin && (
+                            <Link src={ensureHttps(d.basicInfo.linkedin)} style={classicStyles.contactLink}>
+                                <Text style={classicStyles.contactRow}>{d.basicInfo.linkedin.replace(/^https?:\/\/(www\.)?/, '')}</Text>
+                            </Link>
+                        )}
+                        {d.basicInfo?.linkedin && d.basicInfo?.portfolio && <Text style={classicStyles.contactRow}>  •  </Text>}
+                        {d.basicInfo?.portfolio && (
+                            <Link src={ensureHttps(d.basicInfo.portfolio)} style={classicStyles.contactLink}>
+                                <Text style={classicStyles.contactRow}>{d.basicInfo.portfolio.replace(/^https?:\/\/(www\.)?/, '')}</Text>
+                            </Link>
+                        )}
+                    </View>
+                )}
                 <View style={classicStyles.divider} />
 
                 {d.summary && (
@@ -156,16 +194,32 @@ function ModernPDF({ d, watermark = false, accent = "#4338ca" }: { d: CvData; wa
                     <Text style={modernStyles.sidebarName}>{d.basicInfo?.fullName || "Your Name"}</Text>
 
                     <Text style={modernStyles.sidebarSectionTitle}>Contact</Text>
-                    {d.basicInfo?.phone && <Text style={modernStyles.sidebarText}>📞 {d.basicInfo.phone}</Text>}
-                    {d.basicInfo?.email && <Text style={modernStyles.sidebarText}>✉ {d.basicInfo.email}</Text>}
+                    {d.basicInfo?.phone && (
+                        <Link src={`tel:${d.basicInfo.phone}`} style={{ textDecoration: "none", color: "rgba(255,255,255,0.88)" }}>
+                            <Text style={modernStyles.sidebarText}>📞 {d.basicInfo.phone}</Text>
+                        </Link>
+                    )}
+                    {d.basicInfo?.email && (
+                        <Link src={`mailto:${d.basicInfo.email}`} style={{ textDecoration: "none", color: "rgba(255,255,255,0.88)" }}>
+                            <Text style={modernStyles.sidebarText}>✉ {d.basicInfo.email}</Text>
+                        </Link>
+                    )}
                     {d.basicInfo?.location && <Text style={modernStyles.sidebarText}>📍 {d.basicInfo.location}</Text>}
-                    {d.basicInfo?.linkedin && <Text style={{ ...modernStyles.sidebarText, fontSize: 8 }}>{d.basicInfo.linkedin}</Text>}
-                    {d.basicInfo?.portfolio && <Text style={{ ...modernStyles.sidebarText, fontSize: 8 }}>{d.basicInfo.portfolio}</Text>}
+                    {d.basicInfo?.linkedin && (
+                        <Link src={ensureHttps(d.basicInfo.linkedin)} style={{ textDecoration: "none", color: "rgba(255,255,255,0.88)" }}>
+                            <Text style={{ ...modernStyles.sidebarText, fontSize: 8 }}>{d.basicInfo.linkedin.replace(/^https?:\/\/(www\.)?/, '')}</Text>
+                        </Link>
+                    )}
+                    {d.basicInfo?.portfolio && (
+                        <Link src={ensureHttps(d.basicInfo.portfolio)} style={{ textDecoration: "none", color: "rgba(255,255,255,0.88)" }}>
+                            <Text style={{ ...modernStyles.sidebarText, fontSize: 8 }}>{d.basicInfo.portfolio.replace(/^https?:\/\/(www\.)?/, '')}</Text>
+                        </Link>
+                    )}
 
                     {d.skills && d.skills.length > 0 && (
                         <View>
                             <Text style={modernStyles.sidebarSectionTitle}>Skills</Text>
-                            {d.skills.slice(0, 10).map((sk, i) => (
+                            {d.skills.map((sk, i) => (
                                 <View key={i} style={{ marginBottom: 4 }}>
                                     <Text style={modernStyles.sidebarText}>{sk}</Text>
                                     <View style={modernStyles.skillBar}>
@@ -252,12 +306,33 @@ function HeaderPDF({ d, watermark = false, accent = "#7c3aed" }: { d: CvData; wa
                 {watermark && <WatermarkLayer />}
                 {/* Header banner */}
                 <View style={{ backgroundColor: accent, padding: "32 40 24", color: "#fff" }}>
-                    <Text style={{ fontSize: 24, fontFamily: "Helvetica-Bold", color: "#fff", marginBottom: 8 }}>{d.basicInfo?.fullName || "Your Name"}</Text>
-                    <Text style={{ fontSize: 9.5, color: "rgba(255,255,255,0.85)" }}>{contacts.join("  ·  ")}</Text>
+                    <Text style={{ fontSize: 22, fontFamily: "Helvetica-Bold", color: "#fff", marginBottom: 10 }}>{d.basicInfo?.fullName || "Your Name"}</Text>
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", marginBottom: 3 }}>
+                        {d.basicInfo?.phone && (
+                            <Link src={`tel:${d.basicInfo.phone}`} style={{ textDecoration: "none", color: "rgba(255,255,255,0.9)" }}>
+                                <Text style={{ fontSize: 9, color: "rgba(255,255,255,0.9)", marginRight: 8 }}>{d.basicInfo.phone}</Text>
+                            </Link>
+                        )}
+                        {d.basicInfo?.email && (
+                            <Link src={`mailto:${d.basicInfo.email}`} style={{ textDecoration: "none", color: "rgba(255,255,255,0.9)" }}>
+                                <Text style={{ fontSize: 9, color: "rgba(255,255,255,0.9)", marginRight: 8 }}>{d.basicInfo.email}</Text>
+                            </Link>
+                        )}
+                        {d.basicInfo?.location && <Text style={{ fontSize: 9, color: "rgba(255,255,255,0.75)" }}>{d.basicInfo.location}</Text>}
+                    </View>
                     {(d.basicInfo?.linkedin || d.basicInfo?.portfolio) && (
-                        <Text style={{ fontSize: 8.5, color: "rgba(255,255,255,0.65)", marginTop: 3 }}>
-                            {[d.basicInfo.linkedin, d.basicInfo.portfolio].filter(Boolean).join("  ·  ")}
-                        </Text>
+                        <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+                            {d.basicInfo?.linkedin && (
+                                <Link src={ensureHttps(d.basicInfo.linkedin)} style={{ textDecoration: "none", color: "rgba(255,255,255,0.75)" }}>
+                                    <Text style={{ fontSize: 8, color: "rgba(255,255,255,0.75)", marginRight: 8 }}>{d.basicInfo.linkedin.replace(/^https?:\/\/(www\.)?/, '')}</Text>
+                                </Link>
+                            )}
+                            {d.basicInfo?.portfolio && (
+                                <Link src={ensureHttps(d.basicInfo.portfolio)} style={{ textDecoration: "none", color: "rgba(255,255,255,0.75)" }}>
+                                    <Text style={{ fontSize: 8, color: "rgba(255,255,255,0.75)" }}>{d.basicInfo.portfolio.replace(/^https?:\/\/(www\.)?/, '')}</Text>
+                                </Link>
+                            )}
+                        </View>
                     )}
                 </View>
                 {/* Main content */}
@@ -311,41 +386,24 @@ function HeaderPDF({ d, watermark = false, accent = "#7c3aed" }: { d: CvData; wa
 }
 
 // ──────────────────────────────────────────────
-// WATERMARK overlay — single large centered diagonal logo mark
+// WATERMARK overlay — Text watermark in bottom right corner (free versions only)
 // ──────────────────────────────────────────────
 function WatermarkLayer() {
     return (
         <View style={{
             position: "absolute",
-            top: 0, left: 0, right: 0, bottom: 0,
-            justifyContent: "center",
-            alignItems: "center",
+            bottom: 8, right: 8,
+            flexDirection: "column",
+            alignItems: "flex-end",
         }}>
-            {/* Single large diagonal CViq logo mark — solid gray, opacity on wrapper */}
-            <View style={{ transform: [{ rotate: "-30deg" }], opacity: 0.09 }}>
-                <Svg viewBox="0 0 100 100" style={{ width: 320, height: 320 }}>
-                    {/* C arc */}
-                    <Path
-                        d="M52 10C28 10 10 28 10 50C10 72 28 90 52 90C63 90 72 85 77 78"
-                        stroke="#6b7280"
-                        strokeWidth="7"
-                        fill="none"
-                        strokeLinecap="round"
-                    />
-                    {/* V shape */}
-                    <Path
-                        d="M62 12L80 78L98 12"
-                        stroke="#6b7280"
-                        strokeWidth="7"
-                        fill="none"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    />
-                    {/* AI dot — gray */}
-                    <Circle cx="93" cy="6" r="9" fill="#6b7280" />
-                    <Circle cx="93" cy="6" r="4" fill="#d1d5db" />
-                </Svg>
+            {/* Text watermark */}
+            <View style={{ flexDirection: "row" }}>
+                <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 14, color: "#15254A", opacity: 0.5 }}>Nexora </Text>
+                <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 14, color: "#35848A", opacity: 0.5 }}>AI</Text>
             </View>
+            <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 6, color: "#15254A", opacity: 0.5, letterSpacing: 0.5, textTransform: "uppercase" }}>
+                AI Resume Optimizer
+            </Text>
         </View>
     );
 }

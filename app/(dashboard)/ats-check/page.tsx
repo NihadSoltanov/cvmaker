@@ -8,6 +8,49 @@ import { useIsPaid } from "@/lib/useIsPaid";
 
 const FREE_DAILY_LIMIT = 3;
 
+/** Extract only the skill/technology name from a requirement string for search queries. */
+function cleanSearchQuery(raw: string): string {
+    let q = raw.trim();
+
+    // Pattern 1: "Category: skills not mentioned in CV" e.g. "Interface protocols: grpc, CoAP, MQTT not mentioned in CV"
+    const categoryMatch = q.match(/^[A-Za-z][A-Za-z\s&/]+:\s*(.+?)\s+(?:not\s+mentioned|no\s+mention|not\s+(?:found|listed|present|seen)|none|absent|missing|not\s+in)\s+(?:in\s+)?(?:cv|resume)/i);
+    if (categoryMatch) { q = categoryMatch[1]; }
+
+    // Pattern 2: "JD lists/mentions X as plus/bonus/preferred skills ..."
+    else {
+        const jdListsMatch = q.match(/^JD\s+(?:lists?|mentions?|requires?|specifies|includes?)\s+(.+?)\s+as\s+(?:plus|bonus|preferred|required|key|nice.to.have|optional|desired)\s+(?:skills?|tools?|technologies?|qualifications?)/i);
+        if (jdListsMatch) { q = jdListsMatch[1]; }
+        else {
+            // Strip any "Category: " style prefix ("Interface protocols: ", "Tools: ", etc.)
+            q = q.replace(/^[A-Za-z][A-Za-z\s&/]{1,30}:\s*/, '');
+            // Strip common AI-generated prefixes
+            q = q.replace(/^(JD\s+(?:requires|mandates|lists?|mentions?|specifies|expects|asks\s+for|needs)|no\s+specific|missing\s+specific\s+|missing\s+|lacks?\s+|candidate\s+(?:lacks?|has\s+no|missing)|resume\s+(?:lacks?|missing|does\s+not))\s*/i, '');
+        }
+    }
+
+    // Strip suffixes WITH or WITHOUT leading dash
+    // "- no mention in CV", "not mentioned in CV", "- none", "not found in resume" etc.
+    q = q.replace(/\s*[-–—]?\s*(no\s+mention|none|not\s+(?:found|mentioned|listed|present|seen|detected|included)|absent|missing|lacking|candidate\s+(?:lacks?|has\s+no|shows)|cv\s+shows|resume\s+shows).*$/i, '');
+    // Strip "as plus/bonus/preferred skills"
+    q = q.replace(/\s+as\s+(?:plus|bonus|preferred|required|optional|desired|key|nice.to.have)\s+(?:skills?|tools?|technologies?|qualifications?).*$/i, '');
+    // Strip trailing filler
+    q = q.replace(/\s+(despite.*|preferred.*|required.*|which\s+is.*)\s*$/i, '');
+    // Strip parenthetical notes
+    q = q.replace(/\s*\([^)]*\)\s*/g, ' ');
+    // Strip "in cv/resume" remaining
+    q = q.replace(/\s+(in|from|on)\s+(cv|resume|the\s+cv|the\s+resume|candidate).*$/i, '');
+
+    // Replace commas with spaces for better multi-term search
+    q = q.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+
+    // If still too long, cut at word boundary
+    if (q.length > 60) {
+        const cut = q.slice(0, 60).replace(/\s+\S*$/, '');
+        if (cut.length > 10) q = cut;
+    }
+    return q.slice(0, 80) || raw.slice(0, 40);
+}
+
 interface AtsCheckResult {
     ats_score: number;
     ats_score_explanation: string;
@@ -31,6 +74,11 @@ interface AtsCheckResult {
     };
     overall_recommendation: "apply_now" | "apply_with_tweaks" | "build_skills_first" | "not_recommended";
     recommendation_reason: string;
+    debug_meta?: {
+        parser_text_length?: number;
+        keyword_pool_size?: number;
+        deterministic_keyword_match_pct?: number;
+    };
 }
 
 function ScoreCircle({ score, size = "lg" }: { score: number; size?: "sm" | "lg" }) {
@@ -141,6 +189,13 @@ function AtsResults({ result }: { result: AtsCheckResult }) {
                     <SectionBar label="Education Fit" value={result.section_scores?.education_fit ?? 0} />
                     <SectionBar label="Formatting Quality" value={result.section_scores?.formatting_quality ?? 0} />
                 </div>
+                {result.debug_meta && (
+                    <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-800 text-xs text-neutral-500 dark:text-neutral-400 space-y-1">
+                        <p>Parser text length: <span className="font-bold text-neutral-700 dark:text-neutral-300">{result.debug_meta.parser_text_length ?? 0}</span></p>
+                        <p>Keyword pool size: <span className="font-bold text-neutral-700 dark:text-neutral-300">{result.debug_meta.keyword_pool_size ?? 0}</span></p>
+                        <p>Deterministic keyword match: <span className="font-bold text-neutral-700 dark:text-neutral-300">{result.debug_meta.deterministic_keyword_match_pct ?? 0}%</span></p>
+                    </div>
+                )}
             </div>
 
             {/* Keywords */}
@@ -219,7 +274,7 @@ function AtsResults({ result }: { result: AtsCheckResult }) {
                     </p>
                     <div className="space-y-3">
                         {result.missing_requirements.map((req, i) => {
-                            const searchQ = encodeURIComponent(req.slice(0, 80));
+                            const searchQ = encodeURIComponent(cleanSearchQuery(req));
                             return (
                                 <div key={i} className="p-4 bg-orange-50 dark:bg-orange-900/10 rounded-xl border border-orange-100 dark:border-orange-800/30">
                                     <p className="text-sm text-neutral-800 dark:text-neutral-200 mb-2">{req}</p>

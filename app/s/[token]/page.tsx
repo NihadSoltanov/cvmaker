@@ -20,14 +20,23 @@ export default function SharePage() {
         async function load() {
             if (!token) { setError("Invalid link"); setLoading(false); return; }
 
-            // Try Supabase first (works after migration is run)
+            // Fetch from Supabase database
             const { data, error: dbError } = await supabase
                 .from("share_links")
                 .select("*")
                 .eq("token", token)
                 .maybeSingle();
 
-            if (data && !dbError) {
+            console.log("Share link fetch:", { data, dbError, token });
+
+            if (dbError) {
+                console.error("Database error:", dbError);
+                setError(`Database error: ${dbError.message}. Please make sure you've run the migration SQL in Supabase.`);
+                setLoading(false);
+                return;
+            }
+
+            if (data) {
                 // Check expiry
                 if (data.expires_at && new Date(data.expires_at) < new Date()) {
                     setError("expired");
@@ -45,30 +54,18 @@ export default function SharePage() {
                         setExpiresAt(data.expires_at);
                         setLoading(false);
                         return;
+                    } else {
+                        console.error("No resume snapshot in data");
+                        setError("notfound");
                     }
-                } catch { /* fall through to localStorage */ }
-            }
-
-            // Fallback: check localStorage (immediate sharing without DB)
-            const localKey = `share_preview_${token}`;
-            const localData = localStorage.getItem(localKey);
-            if (localData) {
-                try {
-                    const parsed = JSON.parse(localData);
-                    setResumeData(parsed.data);
-                    setTemplateId(parsed.templateId || "classic");
-                    setExpiresAt(parsed.expiresAt || null);
-                    setLoading(false);
-                    return;
-                } catch { /* ignore */ }
-            }
-
-            // Nothing found
-            if (dbError && !data) {
-                setError("Database table not set up. Please run the migration SQL in Supabase.");
+                } catch (e) {
+                    console.error("Failed to parse resume data:", e);
+                    setError("notfound");
+                }
             } else {
                 setError("notfound");
             }
+            
             setLoading(false);
         }
 
@@ -91,7 +88,7 @@ export default function SharePage() {
                 <h1 className="text-2xl font-bold text-neutral-900 mb-2">Link Expired</h1>
                 <p className="text-neutral-500 mb-6">This share link has expired. Ask the owner to generate a new one.</p>
                 <a href="/" className="inline-flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition">
-                    Go to CViq →
+                    Go to Nexora →
                 </a>
             </div>
         </div>
@@ -149,7 +146,7 @@ export default function SharePage() {
             </div>
 
             <div className="text-center mt-8">
-                <p className="text-sm text-neutral-500 mb-3">Powered by <strong className="text-neutral-700">CViq</strong></p>
+                <p className="text-sm text-neutral-500 mb-3">Powered by <strong className="text-neutral-700">Nexora</strong></p>
                 <a href="/" className="inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-500/20">
                     Create Your Own CV →
                 </a>

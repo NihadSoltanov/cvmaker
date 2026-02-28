@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { optimizeCV } from '@/lib/ai';
+import { optimizeCV, parsePdfWithNemotron } from '@/lib/ai';
 import { getCache, setCache } from '@/lib/cache';
 import crypto from 'crypto';
 
@@ -138,10 +138,28 @@ export async function POST(req: Request) {
 
             if (file && file.size > 0) {
                 const buffer = Buffer.from(await file.arrayBuffer());
+                // Step 1: fast regex-based extractor (works for text-based PDFs)
                 resumeText = extractTextFromPdfBuffer(buffer);
+
+                // Step 2: fall back to nemotron-parse only for image uploads if text is sparse/empty
+                // (the model rejects application/pdf data URLs)
+                const isImageUpload = (file.type || '').startsWith('image/');
+                if (resumeText.trim().length < 300 && isImageUpload) {
+                    try {
+                        const mimeType = file.type || 'image/png';
+                        const nemotronText = await parsePdfWithNemotron(buffer, mimeType);
+                        if (nemotronText.trim().length > resumeText.trim().length) {
+                            resumeText = nemotronText;
+                        }
+                    } catch (parseErr) {
+                        // nemotron-parse failed — keep whatever the regex extractor found
+                        const msg = parseErr instanceof Error ? parseErr.message : String(parseErr);
+                        console.warn('nemotron-parse fallback skipped/failed:', msg.slice(0, 180));
+                    }
+                }
             }
             if (!resumeText.trim()) {
-                return NextResponse.json({ error: 'Could not extract text from the uploaded PDF. Try a different file or paste your CV text.' }, { status: 400 });
+                return NextResponse.json({ error: 'Could not extract text from the uploaded PDF. Please try a text-based PDF or paste your CV directly.' }, { status: 400 });
             }
         } else {
             // JSON path (existing saved CV)

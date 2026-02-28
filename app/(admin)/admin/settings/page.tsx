@@ -21,7 +21,7 @@ export default function AdminSettingsPage() {
             const notifications = users.map(u => ({
                 user_id: u.id,
                 type: broadcastType,
-                title: "Announcement from CViq",
+                title: "Announcement from Nexora",
                 body: broadcastMsg.trim(),
                 link: "/dashboard",
             }));

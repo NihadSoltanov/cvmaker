@@ -1,19 +1,21 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { JobPasteBox } from "@/components/JobPasteBox";
 import { ResultsTabs } from "@/components/ResultsTabs";
 import { CvTemplateRenderer, type CvData } from "@/components/CvTemplates";
 import { PdfDownloadButton } from "@/components/PdfGenerator";
-import { Zap, FileText, RefreshCw, Upload, X } from "lucide-react";
+import { Zap, FileText, RefreshCw, Upload, X, Edit2, Code2 } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import { GuideButton } from "@/components/GuideButton";
 import { useIsPaid } from "@/lib/useIsPaid";
 
-const FREE_OPTIMIZE_LIMIT = 3; // per day
+const FREE_OPTIMIZE_LIMIT = 1; // per day
 
 export default function OptimizePage() {
+    const router = useRouter();
     const [jdText, setJdText] = useState("");
     const [isGenerating, setIsGenerating] = useState(false);
     const [results, setResults] = useState<any>(null);
@@ -21,6 +23,8 @@ export default function OptimizePage() {
     const [resumeId, setResumeId] = useState<string | null>(null);
     const [selectedTemplate, setSelectedTemplate] = useState("classic");
     const [rightTab, setRightTab] = useState<"documents" | "cv">("documents");
+    const [cvVersionTab, setCvVersionTab] = useState<"real" | "demo">("real");
+    const [isSavingCv, setIsSavingCv] = useState(false);
 
     // PDF upload state
     const [cvSource, setCvSource] = useState<"saved" | "upload">("saved");
@@ -72,13 +76,91 @@ export default function OptimizePage() {
     }, []);
 
     const reachedOptimizeLimit = !isPaid && optimizeCount >= FREE_OPTIMIZE_LIMIT;
+    const handleDownloadJson = () => {
+        if (!results) return;
+        const jsonStr = JSON.stringify(results, null, 2);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `AI_Output_${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+    const handleEditCv = async (cvData: CvData) => {
+        setIsSavingCv(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                alert("Please log in to edit your CV.");
+                return;
+            }
 
+            // Convert CvData back to resume format
+            const resumeJson = {
+                basicInfo: cvData.basicInfo,
+                summary: cvData.summary,
+                experience: cvData.experience,
+                education: cvData.education,
+                projects: cvData.projects,
+                skills: cvData.skills,
+                languages: cvData.languages,
+                photo: cvData.photo,
+                template_id: selectedTemplate,
+            };
+
+            // Check if resume exists
+            const { data: existing, error: fetchErr } = await supabase
+                .from("resumes")
+                .select("id")
+                .eq("user_id", user.id)
+                .maybeSingle();
+
+            if (fetchErr) {
+                console.error("Fetch error:", fetchErr);
+                alert("Failed to save CV. Please try again.");
+                return;
+            }
+
+            // Update or insert
+            if (existing) {
+                const { error } = await supabase
+                    .from("resumes")
+                    .update({ resume_json: resumeJson })
+                    .eq("id", existing.id);
+                if (error) {
+                    console.error("Update error:", error);
+                    alert("Failed to save CV. Please try again.");
+                    return;
+                }
+            } else {
+                const { error } = await supabase
+                    .from("resumes")
+                    .insert([{ user_id: user.id, title: "Main CV", resume_json: resumeJson }]);
+                if (error) {
+                    console.error("Insert error:", error);
+                    alert("Failed to save CV. Please try again.");
+                    return;
+                }
+            }
+
+            // Redirect to resume editor
+            router.push("/resume");
+        } catch (e: any) {
+            console.error("handleEditCv error:", e);
+            alert("An error occurred. Please try again.");
+        } finally {
+            setIsSavingCv(false);
+        }
+    };
 
     const handleOptimize = async () => {
         if (cvSource === "saved" && !resumeData) { alert("Please save a Master CV first in the 'My CV' page."); return; }
         if (cvSource === "upload" && !uploadedFile) { alert("Please upload a PDF CV file first."); return; }
         if (!jdText.trim()) { alert("Please paste a job description first."); return; }
-        if (reachedOptimizeLimit) { alert(`Free plan: ${FREE_OPTIMIZE_LIMIT} optimizations/day. Upgrade to Pro for unlimited.`); return; }
+        if (reachedOptimizeLimit) { alert(`Free plan: ${FREE_OPTIMIZE_LIMIT} optimization/day. Upgrade to Pro for unlimited optimizations.`); return; }
         setIsGenerating(true);
         setResults(null);
 
@@ -157,6 +239,22 @@ export default function OptimizePage() {
         };
     })() : null;
 
+    // Build demo 100% CvData
+    const demoCv = results?.demo_100_cv;
+    const demoCvData: CvData | null = demoCv && tailoredCvData ? (() => {
+        const base = resumeData || {};
+        return {
+            basicInfo: tailoredCvData.basicInfo,
+            summary: typeof demoCv.summary === "string" ? demoCv.summary : (tailoredCvData.summary || ""),
+            experience: Array.isArray(demoCv.experience) && demoCv.experience.length ? demoCv.experience : tailoredCvData.experience,
+            education: Array.isArray(demoCv.education) && demoCv.education.length ? demoCv.education : tailoredCvData.education,
+            projects: Array.isArray(demoCv.projects) && demoCv.projects.length ? demoCv.projects : tailoredCvData.projects,
+            skills: Array.isArray(demoCv.skills) && demoCv.skills.length ? demoCv.skills : tailoredCvData.skills,
+            languages: Array.isArray(demoCv.languages) ? demoCv.languages : tailoredCvData.languages,
+            photo: base.photo || null,
+        };
+    })() : null;
+
     return (
         <div className="space-y-6 relative z-10 pb-20">
             {/* Header */}
@@ -167,16 +265,17 @@ export default function OptimizePage() {
                     </div>
                     <div>
                         <h1 className="text-4xl font-black tracking-tight text-neutral-900 dark:text-white">Tailor Application</h1>
-                        <p className="text-neutral-500 dark:text-neutral-400 font-medium">AI optimizes your CV, then generates a cover letter, motivation letter, email, and LinkedIn messages.</p>
+                        <p className="text-neutral-500 dark:text-neutral-400 font-medium">AI analyzes your CV against the job description, then generates optimized documents and an ATS-perfect version.</p>
                     </div>
                 </div>
                 <GuideButton guide={{
                     title: "How to Optimize",
                     steps: [
-                        "Save your Master CV in 'My CV' first.",
-                        "Paste the full job description below.",
-                        "Click 'Optimize Now' — AI tailors everything.",
-                        "Review documents on the right. Switch to 'CV Preview' to see the tailored CV.",
+                        "Your CV is automatically loaded from 'My CV' or you can upload a PDF.",
+                        "Paste the complete job description in the text area below.",
+                        "Click 'Optimize with AI' — the system will create two versions: Your optimized CV + a 100% ATS-optimized demo.",
+                        "Review all documents in the tabs on the right. Download both CV versions separately.",
+                        "Use the 'Your Optimized CV' for real applications. The '100% ATS Demo' shows the perfect keyword coverage to aim for.",
                     ],
                     tips: [
                         "The more detailed your CV, the better the output.",
@@ -330,30 +429,133 @@ export default function OptimizePage() {
                             ) : (
                                 /* Live tailored CV preview */
                                 <div className="bg-white/60 dark:bg-black/40 backdrop-blur-xl border border-neutral-200 dark:border-neutral-800 rounded-3xl overflow-hidden">
-                                    <div className="px-5 py-3 border-b border-neutral-100 dark:border-neutral-800 flex items-center gap-2 flex-wrap">
-                                        <span className="w-2 h-2 rounded-full bg-green-400" />
-                                        <span className="text-xs font-bold uppercase tracking-widest text-neutral-500">AI-Tailored CV</span>
-                                        <span className="ml-2 text-[10px] bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full font-bold">Optimized for this JD</span>
-                                        {tailoredCvData && (
-                                            <div className="ml-auto">
-                                                <PdfDownloadButton
-                                                    data={tailoredCvData}
-                                                    templateId={selectedTemplate}
-                                                    fileName={`Tailored_CV_${tailoredCvData?.basicInfo?.fullName?.replace(/\s+/g, "_") || "Resume"}.pdf`}
-                                                    watermark={!isPaid}
-                                                />
+                                    {/* Version toggle */}
+                                    <div className="px-5 py-3 border-b border-neutral-100 dark:border-neutral-800 space-y-3">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="flex-1 bg-neutral-100 dark:bg-neutral-900 rounded-xl p-1 flex gap-1">
+                                                <button
+                                                    onClick={() => setCvVersionTab("real")}
+                                                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${cvVersionTab === "real" ? "bg-white dark:bg-neutral-800 shadow text-neutral-900 dark:text-white" : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"}`}
+                                                >
+                                                    ✅ Your Optimized CV
+                                                    <span className="ml-1.5 text-[10px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-full">
+                                                        ATS: {results?.ats_score ?? "–"}/100
+                                                    </span>
+                                                </button>
+                                                <button
+                                                    onClick={() => setCvVersionTab("demo")}
+                                                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${cvVersionTab === "demo" ? "bg-white dark:bg-neutral-800 shadow text-neutral-900 dark:text-white" : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"}`}
+                                                >
+                                                    🏆 100% ATS Demo
+                                                    <span className="ml-1.5 text-[10px] bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded-full">Preview</span>
+                                                </button>
+                                            </div>
+                                            <button
+                                                onClick={handleDownloadJson}
+                                                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 rounded-lg transition-all border border-neutral-200 dark:border-neutral-700"
+                                                title="Download AI JSON for debugging"
+                                            >
+                                                <Code2 className="w-3.5 h-3.5" />
+                                                Debug
+                                            </button>
+                                        </div>
+
+                                        {/* Demo warning / experience fit */}
+                                        {cvVersionTab === "demo" && demoCv && (
+                                            <div className="space-y-2">
+                                                <div className="flex items-start gap-2 px-3 py-2.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-xl text-xs">
+                                                    <span className="text-base flex-shrink-0">⚠️</span>
+                                                    <div>
+                                                        <p className="font-bold text-amber-800 dark:text-amber-300">DEMO — Do not submit as-is</p>
+                                                        <p className="text-amber-700 dark:text-amber-400 mt-0.5">This version shows the maximum ATS-keyword coverage possible for this job. It may include skills you don&apos;t actually have.</p>
+                                                    </div>
+                                                </div>
+                                                {demoCv._experience_fit && (
+                                                    <div className={`flex items-start gap-2 px-3 py-2.5 rounded-xl text-xs border ${
+                                                        demoCv._is_qualified === false
+                                                            ? "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/40"
+                                                            : "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800/40"
+                                                    }`}>
+                                                        <span className="text-base flex-shrink-0">{demoCv._is_qualified === false ? "🚫" : "🎯"}</span>
+                                                        <p className={`font-medium ${
+                                                            demoCv._is_qualified === false
+                                                                ? "text-red-700 dark:text-red-400"
+                                                                : "text-green-700 dark:text-green-400"
+                                                        }`}>{demoCv._experience_fit}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Header row for the real CV */}
+                                        {cvVersionTab === "real" && (
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-2 h-2 rounded-full bg-green-400" />
+                                                <span className="text-xs font-bold text-neutral-500">Your keywords have been aligned to this job description</span>
+                                                {tailoredCvData && (
+                                                    <div className="ml-auto flex gap-2">
+                                                        <button
+                                                            onClick={() => handleEditCv(tailoredCvData)}
+                                                            disabled={isSavingCv}
+                                                            className="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        >
+                                                            <Edit2 className="w-3.5 h-3.5" />
+                                                            {isSavingCv ? "Saving..." : "Edit CV"}
+                                                        </button>
+                                                        <PdfDownloadButton
+                                                            data={tailoredCvData}
+                                                            templateId={selectedTemplate}
+                                                            fileName={`Tailored_CV_${tailoredCvData?.basicInfo?.fullName?.replace(/\s+/g, "_") || "Resume"}.pdf`}
+                                                            watermark={!isPaid}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Header row for the ATS demo CV */}
+                                        {cvVersionTab === "demo" && demoCvData && (
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                                                <span className="text-xs font-bold text-amber-600 dark:text-amber-400">ATS-Optimized Version — for reference only</span>
+                                                <div className="ml-auto flex gap-2">
+                                                    <button
+                                                        onClick={() => handleEditCv(demoCvData)}
+                                                        disabled={isSavingCv}
+                                                        className="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1.5 shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        <Edit2 className="w-3.5 h-3.5" />
+                                                        {isSavingCv ? "Saving..." : "Edit Demo CV"}
+                                                    </button>
+                                                    <PdfDownloadButton
+                                                        data={demoCvData}
+                                                        templateId="classic"
+                                                        fileName={`ATS_Demo_${demoCvData?.basicInfo?.fullName?.replace(/\s+/g, "_") || "Resume"}.pdf`}
+                                                        watermark={!isPaid}
+                                                    />
+                                                </div>
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* CV render */}
                                     <div className="p-3 bg-neutral-100 dark:bg-neutral-950 overflow-auto max-h-[700px]">
-                                        {tailoredCvData && (
+                                        {cvVersionTab === "real" && tailoredCvData && (
                                             <div style={{ zoom: 0.65 }} className="bg-white shadow-xl rounded">
                                                 <CvTemplateRenderer templateId={selectedTemplate} data={tailoredCvData} />
                                             </div>
                                         )}
+                                        {cvVersionTab === "demo" && demoCvData && (
+                                            <div style={{ zoom: 0.65 }} className="bg-white shadow-xl rounded">
+                                                <CvTemplateRenderer templateId={selectedTemplate} data={demoCvData} />
+                                            </div>
+                                        )}
+                                        {cvVersionTab === "demo" && !demoCvData && (
+                                            <p className="text-center text-neutral-400 py-12">Demo CV not available for this result.</p>
+                                        )}
                                     </div>
                                     <div className="px-5 py-3 border-t border-neutral-100 dark:border-neutral-800 text-xs text-neutral-400 text-center">
-                                        Summary and bullet points have been rewritten by AI to match the job description
+                                        {cvVersionTab === "real" ? "Bullet points and summary rewritten by AI to match this JD" : "Demo shows 100% keyword coverage — review carefully before use"}
                                     </div>
                                 </div>
                             )}
@@ -361,13 +563,28 @@ export default function OptimizePage() {
                     ) : (
                         /* Empty state */
                         <div className="h-full bg-white/40 dark:bg-black/40 backdrop-blur-2xl rounded-[2rem] p-8 flex flex-col items-center justify-center text-center border-2 border-dashed border-neutral-200 dark:border-neutral-800 min-h-[520px]">
-                            <div className="w-20 h-20 bg-neutral-100 dark:bg-neutral-800/50 rounded-full flex items-center justify-center mb-6 border border-neutral-200 dark:border-neutral-700/50">
-                                <Zap className="w-9 h-9 text-neutral-400" />
+                            <div className="w-20 h-20 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-6 border border-purple-200 dark:border-purple-700/50">
+                                <Zap className="w-9 h-9 text-purple-600 dark:text-purple-400" />
                             </div>
-                            <h3 className="text-xl font-bold text-neutral-700 dark:text-neutral-300">Ready to Optimize</h3>
-                            <p className="text-neutral-500 max-w-sm mt-3 leading-relaxed text-sm">
-                                Paste a job description on the left and click Optimize. AI will generate a tailored cover letter, motivation letter, email, LinkedIn messages, and a rewritten CV — all in one shot.
+                            <h3 className="text-xl font-bold text-neutral-800 dark:text-neutral-200">Ready to Tailor Your Application</h3>
+                            <p className="text-neutral-600 dark:text-neutral-400 max-w-md mt-3 leading-relaxed text-sm">
+                                Paste a job description on the left and click <span className="font-bold text-purple-600 dark:text-purple-400">Optimize with AI</span>. 
+                                The system will create:
                             </p>
+                            <div className="mt-5 space-y-2 text-left max-w-md">
+                                <div className="flex items-start gap-2 text-xs text-neutral-600 dark:text-neutral-400">
+                                    <span className="text-green-500 font-bold">✓</span>
+                                    <span><span className="font-bold text-neutral-800 dark:text-neutral-200">Your Optimized CV</span> — with your real info, keywords matched to the job</span>
+                                </div>
+                                <div className="flex items-start gap-2 text-xs text-neutral-600 dark:text-neutral-400">
+                                    <span className="text-amber-500 font-bold">★</span>
+                                    <span><span className="font-bold text-neutral-800 dark:text-neutral-200">100% ATS Demo CV</span> — shows perfect keyword coverage (for reference only)</span>
+                                </div>
+                                <div className="flex items-start gap-2 text-xs text-neutral-600 dark:text-neutral-400">
+                                    <span className="text-indigo-500 font-bold">+</span>
+                                    <span><span className="font-bold text-neutral-800 dark:text-neutral-200">Cover letter, motivation letter, email, LinkedIn messages</span></span>
+                                </div>
+                            </div>
                             <div className="mt-6 flex flex-wrap justify-center gap-2">
                                 {["Cover Letter", "Motivation Letter", "Email", "LinkedIn Msgs", "CV Rewrite", "ATS Score"].map(tag => (
                                     <span key={tag} className="text-xs font-bold bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full border border-indigo-200 dark:border-indigo-700/50">

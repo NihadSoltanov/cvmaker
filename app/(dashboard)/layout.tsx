@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, FileText, Zap, Clock, Settings, LogOut, BrainCircuit, Search, ScanSearch, Shield } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { LangProvider, useLang } from "@/lib/langContext";
+import { useLang } from "@/lib/langContext";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { SupportChat } from "@/components/SupportChat";
@@ -64,19 +64,9 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
         <div className="min-h-screen bg-neutral-100/30 dark:bg-black font-sans flex text-neutral-900 dark:text-neutral-50 relative overflow-hidden selection:bg-indigo-500/30">
             {/* Sidebar */}
             <aside className="w-64 border-r border-neutral-200/50 dark:border-neutral-800/50 bg-white/60 dark:bg-black/40 backdrop-blur-3xl flex flex-col p-6 fixed h-full z-40 transition-all shadow-xl shadow-black/5">
-                <Link href="/dashboard" className="flex items-center gap-3 mb-10 group mt-2">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
-                        <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
-                            <path d="M10.5 4C8 4 5.5 6.2 5.5 10C5.5 13.8 8 16 10.5 16C11.8 16 12.7 15.6 13.2 15.1" stroke="white" strokeWidth="2.1" strokeLinecap="round" fill="none"/>
-                            <path d="M13 4.5L15.5 13.5L18 4.5" stroke="white" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                            <circle cx="16.5" cy="2.5" r="2" fill="#fbbf24"/>
-                            <circle cx="16.5" cy="2.5" r="0.9" fill="white" opacity="0.9"/>
-                        </svg>
-                    </div>
-                    <div className="flex flex-col leading-none">
-                        <span className="font-black text-lg tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">CV<span className="text-indigo-500 dark:text-indigo-400">iq</span></span>
-                        <span className="text-[9px] font-bold text-neutral-400 tracking-widest uppercase">AI Career Intelligence</span>
-                    </div>
+                <Link href="/dashboard" className="flex flex-col leading-tight mb-10 group mt-2">
+                    <span className="font-black text-xl tracking-tight group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">Nexora <span className="text-teal-600 dark:text-teal-400">AI</span></span>
+                    <span className="text-[10px] font-semibold text-neutral-400 tracking-wider uppercase">AI Resume Optimizer</span>
                 </Link>
 
                 <nav className="flex-1 space-y-1.5">
@@ -134,9 +124,5 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-    return (
-        <LangProvider>
-            <DashboardInner>{children}</DashboardInner>
-        </LangProvider>
-    );
+    return <DashboardInner>{children}</DashboardInner>;
 }

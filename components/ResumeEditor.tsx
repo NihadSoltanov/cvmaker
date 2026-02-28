@@ -34,8 +34,8 @@ export function ResumeEditor({ resume, onSave, isSaving }: {
         { institution: "", degree: "", startDate: "", endDate: "" }
     ]);
     const [projects, setProjects] = useState<any[]>([]);
-    const [skills, setSkills] = useState("");
-    const [languages, setLanguages] = useState("");
+    const [skillTags, setSkillTags] = useState<string[]>([]);
+    const [languageTags, setLanguageTags] = useState<string[]>([]);
     const [certifications, setCertifications] = useState<any[]>([]);
     const [volunteerWork, setVolunteerWork] = useState<any[]>([]);
 
@@ -44,9 +44,9 @@ export function ResumeEditor({ resume, onSave, isSaving }: {
         const check = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
-            const { data: sub } = await supabase
-                .from("subscriptions").select("plan,status").eq("user_id", user.id).maybeSingle();
-            if (sub && sub.plan !== "free" && sub.status === "active") setIsPaidUser(true);
+            const { data: profile } = await supabase
+                .from("profiles").select("is_paid").eq("id", user.id).maybeSingle();
+            if (profile?.is_paid) setIsPaidUser(true);
             const start = new Date(); start.setDate(1); start.setHours(0, 0, 0, 0);
             const { count } = await supabase.from("usage_events")
                 .select("id", { count: "exact" })
@@ -72,8 +72,8 @@ export function ResumeEditor({ resume, onSave, isSaving }: {
         if (Array.isArray(resume.experience) && resume.experience.length) setExperience(resume.experience);
         if (Array.isArray(resume.education) && resume.education.length) setEducation(resume.education);
         setProjects(Array.isArray(resume.projects) ? resume.projects : []);
-        setSkills(Array.isArray(resume.skills) ? resume.skills.join(", ") : resume.skills || "");
-        setLanguages(Array.isArray(resume.languages) ? resume.languages.join(", ") : resume.languages || "");
+        setSkillTags(Array.isArray(resume.skills) ? resume.skills : (resume.skills || "").split(",").map((s: string) => s.trim()).filter(Boolean));
+        setLanguageTags(Array.isArray(resume.languages) ? resume.languages : (resume.languages || "").split(",").map((s: string) => s.trim()).filter(Boolean));
         if (resume.photo) setPhotoPreview(resume.photo);
         if (Array.isArray(resume.certifications)) setCertifications(resume.certifications);
         if (Array.isArray(resume.volunteerWork)) setVolunteerWork(resume.volunteerWork);
@@ -90,8 +90,8 @@ export function ResumeEditor({ resume, onSave, isSaving }: {
     const handleSave = () => {
         onSave({
             name: basicInfo.fullName, basicInfo, summary, experience, education, projects,
-            skills: skills.split(",").map(s => s.trim()).filter(Boolean),
-            languages: languages.split(",").map(s => s.trim()).filter(Boolean),
+            skills: skillTags,
+            languages: languageTags,
             photo: photoPreview, certifications, volunteerWork,
         });
     };
@@ -99,23 +99,37 @@ export function ResumeEditor({ resume, onSave, isSaving }: {
     const handleShareLink = async () => {
         setIsSharing(true);
         try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                alert("Please sign in to share your resume.");
+                setIsSharing(false);
+                return;
+            }
+
             const token = Math.random().toString(36).slice(2, 12);
             const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-            localStorage.setItem(`share_preview_${token}`, JSON.stringify({
-                data: resumeData, templateId: selectedTemplate, expiresAt
-            }));
-            try {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                    await supabase.from("share_links").insert([{
-                        user_id: user.id, token, template_id: selectedTemplate,
-                        resume_snapshot: JSON.stringify(resumeData), expires_at: expiresAt,
-                    }]);
-                }
-            } catch { /* localStorage fallback is enough */ }
+            
+            const { data, error } = await supabase.from("share_links").insert([{
+                user_id: user.id, 
+                token, 
+                template_id: selectedTemplate,
+                resume_snapshot: JSON.stringify(resumeData), 
+                expires_at: expiresAt,
+            }]).select();
+
+            if (error) {
+                console.error("Database error:", error);
+                alert(`Failed to create share link: ${error.message}\n\nPlease make sure you've run the migration SQL in Supabase.`);
+                setIsSharing(false);
+                return;
+            }
+
             const url = `${window.location.origin}/s/${token}`;
             setShareUrl(url);
             try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
+        } catch (err) {
+            console.error("Failed to create share link:", err);
+            alert("Failed to create share link. Please try again.");
         } finally { setIsSharing(false); }
     };
 
@@ -127,8 +141,8 @@ export function ResumeEditor({ resume, onSave, isSaving }: {
     const currentTemplateDef = CV_TEMPLATES.find(t => t.id === selectedTemplate);
     const resumeData: CvData = {
         basicInfo, summary, experience, education, projects,
-        skills: skills.split(",").map(s => s.trim()).filter(Boolean),
-        languages: languages.split(",").map(s => s.trim()).filter(Boolean),
+        skills: skillTags,
+        languages: languageTags,
         photo: photoPreview, certifications, volunteerWork,
     };
 
@@ -296,12 +310,12 @@ export function ResumeEditor({ resume, onSave, isSaving }: {
                             {/* Skills & Languages */}
                             <section className="grid grid-cols-2 gap-5">
                                 <div>
-                                    <SH title="Skills" required subtitle="Comma separated." />
-                                    <textarea className="input-styled h-24" value={skills} onChange={e => setSkills(e.target.value)} placeholder="React, TypeScript, Node.js, AWS…" />
+                                    <SH title="Skills" required subtitle="Press Enter to add each skill." />
+                                    <TagInput tags={skillTags} onChange={setSkillTags} placeholder="React, TypeScript… press Enter" />
                                 </div>
                                 <div>
-                                    <SH title="Languages" subtitle="Include proficiency level." />
-                                    <textarea className="input-styled h-24" value={languages} onChange={e => setLanguages(e.target.value)} placeholder="English (Fluent), Turkish (Native)…" />
+                                    <SH title="Languages" subtitle="Press Enter after each language." />
+                                    <TagInput tags={languageTags} onChange={setLanguageTags} placeholder="English (Fluent)… press Enter" />
                                 </div>
                             </section>
 
@@ -395,5 +409,47 @@ function AddBtn({ onClick, label }: { onClick: () => void; label: string }) {
             className="w-full py-2.5 border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-xl text-neutral-500 text-xs font-bold hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition flex items-center justify-center gap-2">
             <Plus className="w-3.5 h-3.5" /> {label}
         </button>
+    );
+}
+
+function TagInput({ tags, onChange, placeholder }: { tags: string[]; onChange: (t: string[]) => void; placeholder?: string }) {
+    const [input, setInput] = useState("");
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const commit = (raw: string) => {
+        const newTags = [...tags];
+        raw.split(",").map(v => v.trim()).filter(Boolean).forEach(val => {
+            if (!newTags.includes(val)) newTags.push(val);
+        });
+        onChange(newTags);
+        setInput("");
+    };
+
+    const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter" || e.key === ",") { e.preventDefault(); commit(input); }
+        else if (e.key === "Backspace" && !input && tags.length) onChange(tags.slice(0, -1));
+    };
+
+    return (
+        <div
+            className="w-full min-h-[90px] rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 px-3 py-2.5 flex flex-wrap gap-1.5 cursor-text"
+            onClick={() => inputRef.current?.focus()}
+        >
+            {tags.map((tag, i) => (
+                <span key={i} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-700/60 select-none whitespace-nowrap">
+                    {tag}
+                    <button type="button" tabIndex={-1} onClick={e => { e.stopPropagation(); onChange(tags.filter((_, j) => j !== i)); }} className="ml-0.5 opacity-50 hover:opacity-100 hover:text-red-500 transition text-base leading-none">×</button>
+                </span>
+            ))}
+            <input
+                ref={inputRef}
+                className="flex-1 min-w-[80px] bg-transparent outline-none text-sm text-neutral-900 dark:text-white placeholder-neutral-400"
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKey}
+                onBlur={() => { if (input.trim()) commit(input); }}
+                placeholder={tags.length === 0 ? placeholder : "Type & press Enter to add…"}
+            />
+        </div>
     );
 }

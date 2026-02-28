@@ -11,6 +11,7 @@ import {
 
 const NAV = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+    { href: "/admin/notifications", label: "Notifications", icon: Bell, badge: "notif" },
     { href: "/admin/users", label: "Users", icon: Users },
     { href: "/admin/messages", label: "Support Inbox", icon: MessageSquare, badge: "live" },
     { href: "/admin/resumes", label: "Resumes", icon: FileText },
@@ -93,7 +94,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             <Shield className="w-4 h-4 text-red-400" />
                         </div>
                         <div>
-                            <p className="text-sm font-black tracking-tight">CViq <span className="text-red-400">Admin</span></p>
+                            <p className="text-sm font-black tracking-tight">Nexora <span className="text-red-400">Admin</span></p>
                             <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Control Panel</p>
                         </div>
                     </div>
@@ -111,6 +112,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 }`}>
                                 <Icon className="w-4 h-4 shrink-0" />
                                 <span className="flex-1">{label}</span>
+                                {badge === "notif" && (
+                                    <span className="flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
+                                    </span>
+                                )}
                                 {badge === "live" && (
                                     <span className="flex items-center gap-1">
                                         {unread > 0 && (

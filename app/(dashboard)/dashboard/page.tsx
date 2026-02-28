@@ -14,11 +14,11 @@ export default function DashboardOverview() {
         const fetchDashboardData = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
-                if (profile) setFullName(profile.full_name || "User");
-
-                const { data: sub } = await supabase.from("subscriptions").select("plan").eq("user_id", user.id).maybeSingle();
-                if (sub) setPlan(sub.plan || "free");
+                const { data: profile } = await supabase.from("profiles").select("full_name, is_paid").eq("id", user.id).maybeSingle();
+                if (profile) {
+                    setFullName(profile.full_name || "User");
+                    setPlan(profile.is_paid ? "pro" : "free");
+                }
             }
         };
         fetchDashboardData();

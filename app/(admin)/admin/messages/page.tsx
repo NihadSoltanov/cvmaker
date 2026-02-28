@@ -413,7 +413,7 @@ export default function AdminMessagesPage() {
                                     onMouseLeave={() => setHoveredMsg(null)}>
                                     <div className={`flex items-center gap-1 mb-0.5 text-[10px] font-bold ${m.sender === "admin" ? "flex-row-reverse text-gray-500" : "text-gray-500"}`}>
                                         {m.sender === "admin" ? <Shield className="w-3 h-3 text-indigo-400" /> : m.sender === "ai" ? <Bot className="w-3 h-3 text-purple-400" /> : <User className="w-3 h-3 text-gray-400" />}
-                                        <span>{m.sender === "admin" ? "You (Admin)" : m.sender === "ai" ? "CViq AI" : "User"}</span>
+                                        <span>{m.sender === "admin" ? "You (Admin)" : m.sender === "ai" ? "Nexora AI" : "User"}</span>
                                         <span className="opacity-50">{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                                     </div>
                                     <div className={`w-full flex items-end gap-1.5 ${m.sender === "admin" ? "justify-end" : "justify-start"}`}>

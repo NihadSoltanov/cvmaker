@@ -11,7 +11,6 @@ export default function SettingsPage() {
     const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
     const [plan, setPlan] = useState("free");
-    const [status, setStatus] = useState("inactive");
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isDemoLoading, setIsDemoLoading] = useState(false);
@@ -21,15 +20,11 @@ export default function SettingsPage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 setEmail(user.email || "");
-                // Fetch profile
-                const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
-                if (profile) setFullName(profile.full_name || "");
-
-                // Fetch subscription
-                const { data: sub } = await supabase.from("subscriptions").select("plan, status").eq("user_id", user.id).maybeSingle();
-                if (sub) {
-                    setPlan(sub.plan);
-                    setStatus(sub.status);
+                // Fetch profile with plan status
+                const { data: profile } = await supabase.from("profiles").select("full_name, is_paid").eq("id", user.id).maybeSingle();
+                if (profile) {
+                    setFullName(profile.full_name || "");
+                    setPlan(profile.is_paid ? "pro" : "free");
                 }
             }
             setIsLoading(false);
@@ -49,25 +44,28 @@ export default function SettingsPage() {
 
     const handleDemoSubscribe = async () => {
         setIsDemoLoading(true);
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { setIsDemoLoading(false); return; }
-        const { data: existing } = await supabase.from("subscriptions").select("id").eq("user_id", user.id).maybeSingle();
-        if (existing) {
-            await supabase.from("subscriptions").update({ plan: "pro", status: "active" }).eq("id", existing.id);
-        } else {
-            await supabase.from("subscriptions").insert([{ user_id: user.id, plan: "pro", status: "active" }]);
-        }
-        setPlan("pro"); setStatus("active");
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { setIsDemoLoading(false); return; }
+        await fetch("/api/demo-pro", {
+            method: "POST",
+            headers: { "content-type": "application/json", authorization: `Bearer ${session.access_token}` },
+            body: JSON.stringify({ activate: true }),
+        });
+        setPlan("pro");
         setIsDemoLoading(false);
     };
 
     const handleDemoCancel = async () => {
         if (!confirm("Cancel Pro subscription? You will be downgraded to Free.")) return;
         setIsDemoLoading(true);
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { setIsDemoLoading(false); return; }
-        await supabase.from("subscriptions").update({ plan: "free", status: "canceled" }).eq("user_id", user.id);
-        setPlan("free"); setStatus("canceled");
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { setIsDemoLoading(false); return; }
+        await fetch("/api/demo-pro", {
+            method: "POST",
+            headers: { "content-type": "application/json", authorization: `Bearer ${session.access_token}` },
+            body: JSON.stringify({ activate: false }),
+        });
+        setPlan("free");
         setIsDemoLoading(false);
     };
 
@@ -139,9 +137,9 @@ export default function SettingsPage() {
                     <div className={`p-6 rounded-2xl border ${plan === "pro" ? "bg-indigo-50/80 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800/50" : "bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800"}`}>
                         <h3 className="font-bold text-lg flex justify-between items-center capitalize">
                             <span className={plan === "pro" ? "text-indigo-700 dark:text-indigo-400" : "text-neutral-700 dark:text-neutral-300"}>{plan} Plan</span>
-                            <span className={`px-3 py-1 text-xs uppercase tracking-wider rounded-md font-bold ${status === "active" ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400" :
+                            <span className={`px-3 py-1 text-xs uppercase tracking-wider rounded-md font-bold ${plan === "pro" ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400" :
                                 "bg-neutral-100 dark:bg-neutral-800 text-neutral-500"
-                                }`}>{status || "inactive"}</span>
+                                }`}>{plan === "pro" ? "active" : "free"}</span>
                         </h3>
                         {plan === "pro" ? (
                             <div className="mt-3 space-y-2 text-sm text-neutral-600 dark:text-neutral-400">
